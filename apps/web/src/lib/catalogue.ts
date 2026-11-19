@@ -380,3 +380,77 @@ export async function fetchCategories(): Promise<CatalogueCategory[]> {
   }
   return Object.entries(counts).map(([category, count]) => ({ category, count }));
 }
+
+export const SYNTHETIC_ELIGIBILITY_QUESTIONS: Record<
+  string,
+  Array<{
+    id: string;
+    key: string;
+    questionText: Record<string, string>;
+    answerType: 'text' | 'number' | 'boolean' | 'single_choice' | 'multi_choice';
+    required: boolean;
+    options?: Array<{
+      id: string;
+      key: string;
+      label: Record<string, string>;
+    }>;
+  }>
+> = {
+  'synthetic-post-matric-scholarship': [
+    {
+      id: 'q-ssp-domicile',
+      key: 'state',
+      questionText: {
+        en: 'Are you a permanent resident of Karnataka?',
+        kn: 'ನೀವು ಕರ್ನಾಟಕದ ಖಾಯಂ ನಿವಾಸಿಯೇ?',
+      },
+      answerType: 'single_choice',
+      required: true,
+      options: [
+        {
+          id: 'opt-ka',
+          key: 'KA',
+          label: {
+            en: 'Yes, resident of Karnataka',
+            kn: 'ಹೌದು, ಕರ್ನಾಟಕದ ನಿವಾಸಿ',
+          },
+        },
+        {
+          id: 'opt-other',
+          key: 'OTHER',
+          label: {
+            en: 'No, other state',
+            kn: 'ಇಲ್ಲ, ಬೇರೆ ರಾಜ್ಯ',
+          },
+        },
+      ],
+    },
+    {
+      id: 'q-ssp-income',
+      key: 'annualIncome',
+      questionText: {
+        en: 'What is your annual family income from all sources in Rupees (₹)?',
+        kn: 'ನಿಮ್ಮ ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯ ಎಷ್ಟು (ರೂ.)?',
+      },
+      answerType: 'number',
+      required: true,
+    },
+  ],
+  'synthetic-senior-citizen-card': [
+    {
+      id: 'q-senior-age',
+      key: 'age',
+      questionText: {
+        en: 'What is your current age in completed years?',
+        kn: 'ನಿಮ್ಮ ಪ್ರಸ್ತುತ ವಯಸ್ಸು ಎಷ್ಟು?',
+      },
+      answerType: 'number',
+      required: true,
+    },
+  ],
+};
+
+export async function fetchEligibilityQuestions(slugOrId: string) {
+  const questions = SYNTHETIC_ELIGIBILITY_QUESTIONS[slugOrId];
+  return questions ?? [];
+}

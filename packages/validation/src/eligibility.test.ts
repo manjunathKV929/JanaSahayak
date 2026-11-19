@@ -118,7 +118,10 @@ describe('@janasahayak/validation Eligibility Engine', () => {
     });
 
     assert.equal(result.result, 'UNLIKELY_ELIGIBLE');
-    assert.equal(result.unmatchedRules.some((r) => r.status === 'FAILED'), true);
+    assert.equal(
+      result.unmatchedRules.some((r) => r.status === 'FAILED'),
+      true,
+    );
   });
 
   it('supports localized Kannada explanations', () => {

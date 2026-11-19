@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { fetchPublishedServiceBySlug } from '@/lib/catalogue';
+import { EligibilityChecker } from '@/components/EligibilityChecker';
+import { fetchEligibilityQuestions, fetchPublishedServiceBySlug } from '@/lib/catalogue';
 import { getWebEnv } from '@/lib/env';
 import {
   Alert,
@@ -33,6 +34,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
   const { service, version, sources, documents, rules, journey, deadlines } = detail;
   const primarySource = sources[0];
+  const questions = await fetchEligibilityQuestions(slug);
 
   return (
     <div className="min-h-screen bg-civic-ivory text-civic-charcoal font-sans antialiased pb-20">
@@ -179,6 +181,17 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               scrutiny takes place when documents are submitted on the government portal.
             </Text>
           </section>
+        )}
+
+        {/* Interactive Eligibility Evaluation */}
+        {questions.length > 0 && (
+          <EligibilityChecker
+            serviceId={service.id}
+            serviceTitle={service.title}
+            rules={rules}
+            questions={questions}
+            language={env.NEXT_PUBLIC_DEFAULT_LANGUAGE}
+          />
         )}
 
         {/* Required Documents Checklist */}

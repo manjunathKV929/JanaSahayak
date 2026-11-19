@@ -2,10 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Queryable } from '@janasahayak/db';
 import { getEligibilityForService } from '@janasahayak/db';
 import type { ApiErrorDetail } from '@janasahayak/types';
-import {
-  evaluateEligibility,
-  evaluateEligibilityRequestSchema,
-} from '@janasahayak/validation';
+import { evaluateEligibility, evaluateEligibilityRequestSchema } from '@janasahayak/validation';
 import type { z } from 'zod';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
@@ -71,7 +68,15 @@ export async function registerEligibilityRoutes(
                     type: 'array',
                     items: {
                       type: 'object',
-                      required: ['id', 'key', 'questionText', 'answerType', 'required', 'displayOrder', 'options'],
+                      required: [
+                        'id',
+                        'key',
+                        'questionText',
+                        'answerType',
+                        'required',
+                        'displayOrder',
+                        'options',
+                      ],
                       properties: {
                         id: { type: 'string' },
                         key: { type: 'string' },
@@ -127,7 +132,7 @@ export async function registerEligibilityRoutes(
       if (bundle.questions.length === 0 && bundle.rules.length === 0) {
         throw new AppError(
           404,
-          'SERVICE_NOT_FOUND',
+          'NOT_FOUND',
           `Service "${id}" does not exist or has no eligibility criteria configured.`,
         );
       }
@@ -149,7 +154,8 @@ export async function registerEligibilityRoutes(
     '/services/:id/eligibility/evaluate',
     {
       schema: {
-        description: 'Deterministically evaluate citizen answers against official service eligibility rules',
+        description:
+          'Deterministically evaluate citizen answers against official service eligibility rules',
         tags: ['Eligibility'],
         params: {
           type: 'object',
@@ -185,7 +191,14 @@ export async function registerEligibilityRoutes(
             properties: {
               data: {
                 type: 'object',
-                required: ['result', 'matchedRules', 'unmatchedRules', 'missingFields', 'explanations', 'disclaimer'],
+                required: [
+                  'result',
+                  'matchedRules',
+                  'unmatchedRules',
+                  'missingFields',
+                  'explanations',
+                  'disclaimer',
+                ],
                 properties: {
                   result: {
                     type: 'string',
@@ -265,7 +278,7 @@ export async function registerEligibilityRoutes(
       if (!parseResult.success) {
         throw new AppError(
           400,
-          'INVALID_INPUT',
+          'VALIDATION_ERROR',
           'Invalid eligibility answers payload.',
           formatZodIssues(parseResult.error.issues),
         );
@@ -278,7 +291,7 @@ export async function registerEligibilityRoutes(
       if (bundle.questions.length === 0 && bundle.rules.length === 0) {
         throw new AppError(
           404,
-          'SERVICE_NOT_FOUND',
+          'NOT_FOUND',
           `Service "${id}" does not exist or has no eligibility criteria configured.`,
         );
       }

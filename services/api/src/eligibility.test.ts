@@ -151,7 +151,7 @@ describe('@janasahayak/api Eligibility Routes', () => {
 
     assert.equal(res.statusCode, 404);
     const body = JSON.parse(res.payload);
-    assert.equal(body.error.code, 'SERVICE_NOT_FOUND');
+    assert.equal(body.error.code, 'NOT_FOUND');
   });
 
   test('POST /api/v1/services/:id/eligibility/evaluate returns POTENTIALLY_ELIGIBLE', async () => {
