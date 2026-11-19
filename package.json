@@ -1,0 +1,41 @@
+{
+  "name": "janasahayak",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JanaSahayak — Government services, explained simply.",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=@janasahayak/types && npm run build --workspace=@janasahayak/ui && npm run build --workspace=@janasahayak/validation && npm run build --workspace=@janasahayak/config && npm run build --workspace=@janasahayak/db && npm run build --workspace=@janasahayak/api && npm run build --workspace=@janasahayak/web",
+    "dev:api": "npm run dev --workspace=@janasahayak/api",
+    "dev:web": "npm run dev --workspace=@janasahayak/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node scripts/run-tests.mjs",
+    "test:watch": "node scripts/run-tests.mjs --watch",
+    "test:coverage": "node scripts/run-tests.mjs --coverage",
+    "db:migrate": "npm run migrate --workspace=@janasahayak/db",
+    "openapi:validate": "npm run openapi:validate --workspace=@janasahayak/api",
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['packages/types/dist','packages/ui/dist','packages/validation/dist','packages/config/dist','packages/db/dist','services/api/dist','apps/web/.next','coverage']) fs.rmSync(p,{recursive:true,force:true});\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.25.0",
+    "eslint-config-prettier": "^10.1.2",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.0"
+  }
+}
