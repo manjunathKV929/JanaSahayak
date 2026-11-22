@@ -8,6 +8,7 @@ import {
 } from '@janasahayak/db';
 import type { ApiErrorDetail } from '@janasahayak/types';
 import {
+  languageQuerySchema,
   searchServicesQuerySchema,
   serviceSlugParamSchema,
   uuidSchema,
@@ -191,6 +192,12 @@ export async function registerCatalogueRoutes(
             slug: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' },
           },
         },
+        querystring: {
+          type: 'object',
+          properties: {
+            language: { type: 'string', enum: ['en', 'hi', 'kn'] },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -239,7 +246,7 @@ export async function registerCatalogueRoutes(
                       id: { type: 'string', format: 'uuid' },
                       serviceId: { type: 'string', format: 'uuid' },
                       versionNumber: { type: 'integer' },
-                      content: { type: 'object' },
+                      content: { type: 'object', additionalProperties: true },
                       language: { type: 'string' },
                       effectiveFrom: { type: ['string', 'null'] },
                       effectiveTo: { type: ['string', 'null'] },
@@ -363,7 +370,10 @@ export async function registerCatalogueRoutes(
         );
       }
 
-      const detail = await getPublishedServiceBySlug(db, parsed.data.slug);
+      const queryParsed = languageQuerySchema.safeParse(request.query);
+      const language = queryParsed.success ? queryParsed.data.language : undefined;
+
+      const detail = await getPublishedServiceBySlug(db, parsed.data.slug, language);
       if (!detail) {
         throw new AppError(404, 'NOT_FOUND', 'Service not found.');
       }

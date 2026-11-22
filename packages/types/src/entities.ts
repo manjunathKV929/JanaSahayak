@@ -71,14 +71,52 @@ export interface DocumentIssuerRecord {
   createdAt: string;
 }
 
+export interface DocumentIssuingStep {
+  stepNumber: number;
+  title: string;
+  description: Record<string, string>;
+  officialUrl?: string | null | undefined;
+}
+
+export interface DocumentPrerequisite {
+  name: string;
+  description: Record<string, string>;
+}
+
+export interface DocumentIssuingAuthority {
+  name: string;
+  department: string;
+  portalUrl: string | null;
+  physicalOffices: string;
+  helpline: string | null;
+}
+
+export interface DocumentIssuingGuide {
+  purpose: Record<string, string>;
+  prerequisites: DocumentPrerequisite[];
+  issuingAuthority: DocumentIssuingAuthority;
+  processingTimeDays: number;
+  fees: Record<string, string>;
+  validityPeriod: Record<string, string>;
+  steps: DocumentIssuingStep[];
+  alternativeDocuments?: string[] | undefined;
+}
+
 export interface DocumentRecord {
   id: string;
   name: string;
   description: string;
   documentType: string;
   issuerId: string | null;
+  issuingGuide?: DocumentIssuingGuide | undefined;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DocumentGuideDetail extends DocumentRecord {
+  document: DocumentRecord;
+  issuer: DocumentIssuerRecord | null;
+  guide: DocumentIssuingGuide;
 }
 
 export interface ServiceDocumentRecord {
@@ -177,15 +215,70 @@ export interface JourneyStepRecord {
   completionRule: Record<string, unknown> | null;
 }
 
+export type JourneyProgressStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+export type StepExecutionStatus = 'COMPLETED' | 'IN_PROGRESS' | 'NEXT' | 'UPCOMING' | 'BLOCKED';
+export type StepCompletionRuleType =
+  'MANUAL_CONFIRMATION' | 'DOCUMENT_CHECKLIST' | 'ELIGIBILITY_EVALUATION' | 'APPLICATION_REFERENCE';
+
+export interface StepCompletionRule {
+  type: StepCompletionRuleType;
+  requiredFields?: string[];
+  description?: string;
+  allowSelfDeclaration?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
 export interface UserJourneyProgressRecord {
   id: string;
   userId: string;
   journeyId: string;
   stepId: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+  status: JourneyProgressStatus;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserJourneyRecord {
+  id: string;
+  userId: string;
+  journeyId: string;
+  serviceId: string;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  startedAt: string;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JourneyStepWithProgress extends JourneyStepRecord {
+  status: StepExecutionStatus;
+  completedAt: string | null;
+  isNextStep: boolean;
+  canComplete: boolean;
+}
+
+export interface JourneyProgressSummary {
+  totalSteps: number;
+  completedSteps: number;
+  currentStepIndex: number;
+  percentage: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  nextStep: JourneyStepWithProgress | null;
+}
+
+export interface UserJourneyDetail {
+  id: string;
+  serviceId: string;
+  serviceSlug: string;
+  serviceTitle: string;
+  journeyTemplateId: string;
+  title: string;
+  description: string;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  progress: JourneyProgressSummary;
+  steps: JourneyStepWithProgress[];
+  nextStep: JourneyStepWithProgress | null;
 }
 
 export interface ServiceSourceRecord {

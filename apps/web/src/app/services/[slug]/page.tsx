@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { AIAssistant } from '@/components/AIAssistant';
+import { DocumentChecklist } from '@/components/DocumentChecklist';
 import { EligibilityChecker } from '@/components/EligibilityChecker';
+import { JourneyStepper } from '@/components/JourneyStepper';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { fetchEligibilityQuestions, fetchPublishedServiceBySlug } from '@/lib/catalogue';
 import { getWebEnv } from '@/lib/env';
+import type { SupportedLanguage } from '@janasahayak/types';
 import {
   Alert,
   Breadcrumb,
   Card,
   Header,
   Heading,
-  NextStepCard,
   Paragraph,
   SkipLink,
   Text,
@@ -21,12 +25,20 @@ interface ServiceDetailPageProps {
   params: Promise<{
     slug: string;
   }>;
+  searchParams?: Promise<{
+    lang?: string;
+  }>;
 }
 
-export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
+export default async function ServiceDetailPage({ params, searchParams }: ServiceDetailPageProps) {
   const env = getWebEnv();
   const { slug } = await params;
-  const detail = await fetchPublishedServiceBySlug(slug);
+  const { lang: queryLang } = (await searchParams) ?? {};
+
+  const activeLanguage: SupportedLanguage =
+    queryLang === 'hi' || queryLang === 'kn' ? queryLang : 'en';
+
+  const detail = await fetchPublishedServiceBySlug(slug, activeLanguage);
 
   if (!detail) {
     notFound();
@@ -36,6 +48,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const primarySource = sources[0];
   const questions = await fetchEligibilityQuestions(slug);
 
+  const displayTitle =
+    (typeof version?.content?.title === 'string' ? version.content.title : null) ?? service.title;
+  const displayShortDesc =
+    (typeof version?.content?.overview === 'string' ? version.content.overview : null) ??
+    service.shortDescription;
+
   return (
     <div className="min-h-screen bg-civic-ivory text-civic-charcoal font-sans antialiased pb-20">
       <SkipLink targetId="main-content" />
@@ -43,7 +61,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       <Header
         brandName={env.NEXT_PUBLIC_APP_NAME}
         tagline="Government services, explained simply."
-        currentLanguage={env.NEXT_PUBLIC_DEFAULT_LANGUAGE.toUpperCase()}
+        currentLanguage={activeLanguage.toUpperCase()}
       >
         <Link
           href="/services"
@@ -57,6 +75,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         >
           Design System
         </Link>
+        <LanguageSwitcher currentLanguage={activeLanguage} compact />
       </Header>
 
       <main id="main-content" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
@@ -65,7 +84,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           items={[
             { label: 'Home', href: '/' },
             { label: 'Services', href: '/services' },
-            { label: service.title, href: `/services/${service.slug}`, current: true },
+            { label: displayTitle, href: `/services/${service.slug}`, current: true },
           ]}
         />
 
@@ -86,11 +105,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           </div>
 
           <Heading as="h1" size="h1" className="text-civic-navy">
-            {service.title}
+            {displayTitle}
           </Heading>
 
           <Paragraph size="large" className="text-civic-charcoal">
-            {service.shortDescription}
+            {displayShortDesc}
           </Paragraph>
 
           <div className="flex items-center gap-3 pt-2">
@@ -183,6 +202,14 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           </section>
         )}
 
+        {/* Grounded Civic AI Assistant */}
+        <AIAssistant
+          serviceSlug={service.slug}
+          serviceId={service.id}
+          serviceTitle={displayTitle}
+          currentLanguage={activeLanguage}
+        />
+
         {/* Interactive Eligibility Evaluation */}
         {questions.length > 0 && (
           <EligibilityChecker
@@ -190,66 +217,32 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             serviceTitle={service.title}
             rules={rules}
             questions={questions}
-            language={env.NEXT_PUBLIC_DEFAULT_LANGUAGE}
+            language={activeLanguage}
           />
         )}
 
-        {/* Required Documents Checklist */}
+        {/* Interactive Required Documents Checklist & Missing Guidance */}
         {documents.length > 0 && (
-          <section aria-labelledby="documents-heading" className="space-y-4">
-            <Heading as="h2" size="h2" id="documents-heading" className="text-civic-navy">
-              Required Documents Checklist
-            </Heading>
-
-            <div className="grid grid-cols-1 gap-3">
-              {documents.map((doc, idx) => (
-                <div
-                  key={doc.id}
-                  className="flex items-start gap-3 p-4 rounded-lg border border-civic-border bg-white shadow-sm"
-                >
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-civic-navy/10 text-civic-navy text-xs font-bold flex items-center justify-center font-heading">
-                    {idx + 1}
-                  </span>
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-heading font-bold text-sm text-civic-navy">{doc.name}</p>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-civic-green/10 text-civic-green">
-                        Required
-                      </span>
-                    </div>
-                    <p className="text-xs text-civic-charcoal">{doc.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <DocumentChecklist
+            documents={documents}
+            serviceSlug={service.slug}
+            serviceTitle={service.title}
+          />
         )}
 
-        {/* Step-by-Step Guidance */}
+        {/* Step-by-Step Application Journey Engine */}
         {journey && journey.steps.length > 0 && (
           <section aria-labelledby="journey-heading" className="space-y-4">
             <div className="space-y-1">
               <Heading as="h2" size="h2" id="journey-heading" className="text-civic-navy">
-                Step-by-Step Application Guide
+                Step-by-Step Application Journey
               </Heading>
               <Text size="small" className="text-civic-muted">
                 {journey.description}
               </Text>
             </div>
 
-            <div className="space-y-4">
-              {journey.steps.map((step) => (
-                <NextStepCard
-                  key={step.id}
-                  stepNumber={step.displayOrder}
-                  title={step.title}
-                  description={step.description['en'] ?? ''}
-                  actionLabel={step.officialUrl ? 'Open Step Link ↗' : undefined}
-                  actionHref={step.officialUrl ?? undefined}
-                  isOfficialRoute={Boolean(step.officialUrl)}
-                />
-              ))}
-            </div>
+            <JourneyStepper service={detail} language={activeLanguage} />
           </section>
         )}
 

@@ -1,8 +1,14 @@
 import type {
+  AIAssistResult,
   CatalogueCategory,
+  DocumentGuideDetail,
   PublicServiceDetail,
   PublicServiceSummary,
+  SearchInterpretationResult,
+  SupportedLanguage,
+  UserJourneyDetail,
 } from '@janasahayak/types';
+import { RAGService } from '@janasahayak/ai';
 
 export const SYNTHETIC_SAMPLE_SERVICES: PublicServiceDetail[] = [
   {
@@ -366,11 +372,101 @@ export async function fetchPublishedServices(
   return list;
 }
 
+export const SYNTHETIC_LOCALIZED_VERSIONS: Record<
+  string,
+  Record<string, Record<string, unknown>>
+> = {
+  'synthetic-post-matric-scholarship': {
+    kn: {
+      title: '[ಮಾದರಿ] ಮೆಟ್ರಿಕ್-ನಂತರದ ವಿದ್ಯಾರ್ಥಿವೇತನ ಯೋಜನೆ (ಕರ್ನಾಟಕ)',
+      department: 'ಸಮಾಜ ಕಲ್ಯಾಣ ಇಲಾಖೆ',
+      overview:
+        'ಕರ್ನಾಟಕದಲ್ಲಿ ಮಾನ್ಯತೆ ಪಡೆದ ಕೋರ್ಸ್‌ಗಳಲ್ಲಿ ವ್ಯಾಸಂಗ ಮಾಡುತ್ತಿರುವ ಅರ್ಹ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಶೈಕ್ಷಣಿಕ ಶುಲ್ಕ ಮತ್ತು ನಿರ್ವಹಣಾ ಭತ್ಯೆಗಾಗಿ ಆರ್ಥಿಕ ನೆರವು.',
+      benefits:
+        'ಕೋರ್ಸ್ ಶುಲ್ಕ ಮರುಪಾವತಿ ಮತ್ತು ಮಾಸಿಕ ನಿರ್ವಹಣಾ ಭತ್ಯೆಯನ್ನು ನೇರ ನಗದು ವರ್ಗಾವಣೆ (DBT) ಮೂಲಕ ಬ್ಯಾಂಕ್ ಖಾತೆಗೆ ಜಮಾ ಮಾಡಲಾಗುತ್ತದೆ.',
+      eligibilitySummary:
+        'ಕರ್ನಾಟಕದ ಖಾಯಂ ನಿವಾಸಿಯಾಗಿರಬೇಕು. ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯ ₹2,50,000 ಕ್ಕಿಂತ ಕಡಿಮೆ ಇರಬೇಕು. ಹಿಂದಿನ ಪರೀಕ್ಷೆಯಲ್ಲಿ ಕನಿಷ್ಠ 50% ಅಂಕಗಳನ್ನು ಪಡೆದಿರಬೇಕು.',
+      applicationProcess:
+        '1. ರಾಜ್ಯ ವಿದ್ಯಾರ್ಥಿವೇತನ ಪೋರ್ಟಲ್ (SSP) ನಲ್ಲಿ ಖಾತೆ ತೆರೆಯಿರಿ. 2. ಆದಾಯ ಮತ್ತು ಜಾತಿ ಪ್ರಮಾಣಪತ್ರಗಳ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ. 3. ಕಾಲೇಜು ಪ್ರವೇಶ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ ಆನ್‌ಲೈನ್ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ.',
+    },
+    hi: {
+      title: '[सिंथेटिक नमूना] पोस्ट-मैट्रिक छात्रवृत्ति योजना (कर्नाटक)',
+      department: 'समाज कल्याण विभाग',
+      overview:
+        'कर्नाटक में मान्यता प्राप्त पाठ्यक्रमों में उच्च शिक्षा प्राप्त कर रहे पात्र छात्रों के लिए वित्तीय सहायता।',
+      benefits:
+        'शिक्षण शुल्क प्रतिपूर्ति और मासिक रखरखाव भत्ता सीधे बैंक खाते में प्रत्यक्ष लाभ अंतरण (DBT) के माध्यम से।',
+      eligibilitySummary:
+        'कर्नाटक का स्थायी निवासी होना अनिवार्य है। वार्षिक पारिवारिक आय ₹2,50,000 से कम होनी चाहिए। पिछली परीक्षा में न्यूनतम 50% अंक अनिवार्य हैं।',
+      applicationProcess:
+        '1. राज्य छात्रवृत्ति पोर्टल (SSP) पर पंजीकरण करें। 2. आय एवं जाति प्रमाण पत्र संख्या सत्यापित करें। 3. कॉलेज प्रवेश विवरण दर्ज कर ऑनलाइन आवेदन जमा करें।',
+    },
+  },
+  'synthetic-senior-citizen-card': {
+    kn: {
+      title: '[ಮಾದರಿ] ಹಿರಿಯ ನಾಗರಿಕರ ಗುರುತಿನ ಚೀಟಿ (ಕರ್ನಾಟಕ)',
+      department: 'ಮಹಿಳಾ ಮತ್ತು ಮಕ್ಕಳ ಅಭಿವೃದ್ಧಿ ಹಾಗೂ ಹಿರಿಯ ನಾಗರಿಕರ ಸಬಲೀಕರಣ ಇಲಾಖೆ',
+      overview:
+        'ಕರ್ನಾಟಕದಲ್ಲಿ ವಾಸಿಸುವ 60 ವರ್ಷ ಅಥವಾ ಅದಕ್ಕಿಂತ ಹೆಚ್ಚಿನ ವಯಸ್ಸಿನ ನಾಗರಿಕರಿಗೆ ಅಧಿಕೃತ ಗುರುತಿನ ಚೀಟಿ ಮತ್ತು ಸೌಲಭ್ಯಗಳು.',
+      benefits:
+        'ಕೆಎಸ್‌ಆರ್‌ಟಿಸಿ ಬಸ್ ಪ್ರಯಾಣದಲ್ಲಿ ರಿಯಾಯಿತಿ, ಸರ್ಕಾರಿ ಆಸ್ಪತ್ರೆಗಳಲ್ಲಿ ಆದ್ಯತೆಯ ವೈದ್ಯಕೀಯ ಚಿಕಿತ್ಸೆ ಮತ್ತು ಸಾಮಾಜಿಕ ಭದ್ರತಾ ಯೋಜನೆಗಳು.',
+      eligibilitySummary:
+        'ಅರ್ಜಿದಾರರ ವಯಸ್ಸು 60 ವರ್ಷ ಅಥವಾ ಅದಕ್ಕಿಂತ ಹೆಚ್ಚಾಗಿರಬೇಕು ಮತ್ತು ಕರ್ನಾಟಕದ ಖಾಯಂ ನಿವಾಸಿಯಾಗಿರಬೇಕು.',
+      applicationProcess:
+        '1. ಸೇವಾ ಸಿಂಧು ಪೋರ್ಟಲ್ ಅಥವಾ ಗ್ರಾಮ ಒನ್ ಕೇಂದ್ರದಲ್ಲಿ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ. 2. ವಯಸ್ಸಿನ ಪುರಾವೆ ಮತ್ತು ವಿಳಾಸದ ದಾಖಲೆಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ. 3. ಪರಿಶೀಲನೆಯ ನಂತರ ಡಿಜಿಟಲ್ ಕಾರ್ಡ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
+    },
+    hi: {
+      title: '[सिंथेटिक नमूना] वरिष्ठ नागरिक पहचान पत्र (कर्नाटक)',
+      department: 'महिला एवं बाल विकास तथा वरिष्ठ नागरिक अधिकारिता विभाग',
+      overview:
+        'कर्नाटक में रहने वाले 60 वर्ष या उससे अधिक आयु के वरिष्ठ नागरिकों के लिए आधिकारिक पहचान पत्र एवं सुविधाएं।',
+      benefits:
+        'केएसआरटीसी बसों में रियायती यात्रा, सरकारी अस्पतालों में प्राथमिकता उपचार और सामाजिक सुरक्षा योजनाएं।',
+      eligibilitySummary:
+        'आवेदक की आयु 60 वर्ष या उससे अधिक होनी चाहिए और कर्नाटक का स्थायी निवासी होना चाहिए।',
+      applicationProcess:
+        '1. सेवा सिंधु पोर्टल या ग्राम वन केंद्र पर आवेदन करें। 2. आयु और पते का प्रमाण अपलोड करें। 3. सत्यापन के बाद डिजिटल कार्ड डाउनलोड करें।',
+    },
+  },
+};
+
 export async function fetchPublishedServiceBySlug(
   slug: string,
+  language?: string,
 ): Promise<PublicServiceDetail | null> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+
+  try {
+    const url = language
+      ? `${apiBase}/services/${encodeURIComponent(slug)}?language=${encodeURIComponent(language)}`
+      : `${apiBase}/services/${encodeURIComponent(slug)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // API not reachable, fall back to synthetic mock
+  }
+
   const match = SYNTHETIC_SAMPLE_SERVICES.find((s) => s.service.slug === slug);
-  return match ?? null;
+  if (!match) return null;
+
+  if (language && language !== 'en') {
+    const localized = SYNTHETIC_LOCALIZED_VERSIONS[slug]?.[language];
+    if (localized) {
+      return {
+        ...match,
+        version: {
+          ...match.version!,
+          language: language as import('@janasahayak/types').SupportedLanguage,
+          content: localized,
+        },
+      };
+    }
+  }
+
+  return match;
 }
 
 export async function fetchCategories(): Promise<CatalogueCategory[]> {
@@ -453,4 +549,420 @@ export const SYNTHETIC_ELIGIBILITY_QUESTIONS: Record<
 export async function fetchEligibilityQuestions(slugOrId: string) {
   const questions = SYNTHETIC_ELIGIBILITY_QUESTIONS[slugOrId];
   return questions ?? [];
+}
+
+export const SYNTHETIC_DOCUMENT_GUIDES: Record<string, DocumentGuideDetail> = {
+  'doc-income': {
+    id: 'doc-income',
+    name: 'Income Certificate (Form F / RD)',
+    description: 'Official revenue certificate proving gross annual household income.',
+    documentType: 'CERTIFICATE',
+    issuerId: 'iss-nadakacheri',
+    createdAt: '2026-11-10T00:00:00.000Z',
+    updatedAt: '2026-11-10T00:00:00.000Z',
+    issuer: {
+      id: 'iss-nadakacheri',
+      name: 'Nadakacheri (Revenue Department, Karnataka)',
+      issuerType: 'STATE_DEPARTMENT',
+      portalUrl: 'https://nadakacheri.karnataka.gov.in',
+      createdAt: '2026-11-10T00:00:00.000Z',
+    },
+    guide: {
+      purpose: {
+        en: 'Proves family gross annual income to verify eligibility for scholarships and fee concessions in Karnataka.',
+        kn: 'ಕರ್ನಾಟಕದಲ್ಲಿ ವಿದ್ಯಾರ್ಥಿವೇತನ ಮತ್ತು ಶುಲ್ಕ ರಿಯಾಯಿತಿಗಳಿಗೆ ಕುಟುಂಬದ ವಾರ್ಷಿಕ ಆದಾಯವನ್ನು ಸಾಬೀತುಪಡಿಸಲು ಅಗತ್ಯವಿದೆ.',
+      },
+      prerequisites: [
+        {
+          name: 'Ration Card (BPL/APL)',
+          description: { en: 'For family verification and address confirmation.' },
+        },
+        { name: 'Aadhaar Card', description: { en: 'For biometric / OTP authentication.' } },
+        {
+          name: 'Self-declaration of income',
+          description: { en: 'Salary slip, Form 16, or signed declaration.' },
+        },
+      ],
+      issuingAuthority: {
+        name: 'Nadakacheri (Atalji Janasnehi Kendra)',
+        department: 'Revenue Department, Government of Karnataka',
+        portalUrl: 'https://nadakacheri.karnataka.gov.in',
+        physicalOffices: 'Nadakacheri, Bangalore One, Karnataka One, Grama One centres',
+        helpline: '080-22370281',
+      },
+      processingTimeDays: 14,
+      fees: {
+        en: '₹25 user charge at citizen service counters; ₹0 on official portal self-service.',
+        kn: 'ಸಹಾಯ ಕೇಂದ್ರಗಳಲ್ಲಿ ₹೨೫ ಶುಲ್ಕ; ಅಧಿಕೃತ ಪೋರ್ಟಲ್‌ನಲ್ಲಿ ಉಚಿತ.',
+      },
+      validityPeriod: {
+        en: 'Valid for 5 years from date of issue in Karnataka.',
+        kn: 'ನೀಡಿದ ದಿನಾಂಕದಿಂದ ೫ ವರ್ಷಗಳವರೆಗೆ ಮಾನ್ಯವಾಗಿರುತ್ತದೆ.',
+      },
+      steps: [
+        {
+          stepNumber: 1,
+          title: 'Prepare Aadhaar and Ration Card',
+          description: {
+            en: 'Keep your 12-digit Aadhaar number and active Ration Card number ready.',
+          },
+        },
+        {
+          stepNumber: 2,
+          title: 'Submit Application Online or at Citizen Centre',
+          description: {
+            en: 'Apply online on Nadakacheri portal or visit nearest Grama One / Bangalore One counter.',
+          },
+          officialUrl: 'https://nadakacheri.karnataka.gov.in',
+        },
+        {
+          stepNumber: 3,
+          title: 'Track and Download with RD Number',
+          description: {
+            en: 'Once verified by Revenue Inspector, download your digitally signed certificate.',
+          },
+          officialUrl: 'https://nadakacheri.karnataka.gov.in',
+        },
+      ],
+      alternativeDocuments: [
+        'Income statement issued by Gazetted Officer (where specifically permitted)',
+      ],
+    },
+    document: {
+      id: 'doc-income',
+      name: 'Income Certificate (Form F / RD)',
+      description: 'Official revenue certificate proving gross annual household income.',
+      documentType: 'CERTIFICATE',
+      issuerId: 'iss-nadakacheri',
+      createdAt: '2026-11-10T00:00:00.000Z',
+      updatedAt: '2026-11-10T00:00:00.000Z',
+    },
+  },
+  'doc-caste': {
+    id: 'doc-caste',
+    name: 'Caste / Category Certificate',
+    description: 'Official revenue certificate validating SC/ST/OBC category reservation.',
+    documentType: 'CERTIFICATE',
+    issuerId: 'iss-nadakacheri',
+    createdAt: '2026-11-10T00:00:00.000Z',
+    updatedAt: '2026-11-10T00:00:00.000Z',
+    issuer: {
+      id: 'iss-nadakacheri',
+      name: 'Nadakacheri (Revenue Department, Karnataka)',
+      issuerType: 'STATE_DEPARTMENT',
+      portalUrl: 'https://nadakacheri.karnataka.gov.in',
+      createdAt: '2026-11-10T00:00:00.000Z',
+    },
+    guide: {
+      purpose: {
+        en: 'Validates caste and category reservation status for admissions and government benefits.',
+        kn: 'ಶಿಕ್ಷಣ ಮತ್ತು ಸರ್ಕಾರದ ಸವಲತ್ತುಗಳಿಗಾಗಿ ಜಾತಿ ಮತ್ತು ವರ್ಗ ಮೀಸಲಾತಿಯನ್ನು ದೃಢೀಕರಿಸುತ್ತದೆ.',
+      },
+      prerequisites: [
+        { name: 'Aadhaar Card', description: { en: 'Applicant identification proof.' } },
+        {
+          name: 'School Leaving Certificate / TC',
+          description: { en: 'Shows caste recorded in school records.' },
+        },
+      ],
+      issuingAuthority: {
+        name: 'Tahsildar / Nadakacheri',
+        department: 'Revenue Department, Government of Karnataka',
+        portalUrl: 'https://nadakacheri.karnataka.gov.in',
+        physicalOffices: 'Taluk Office, Nadakacheri, Grama One',
+        helpline: '080-22370281',
+      },
+      processingTimeDays: 21,
+      fees: {
+        en: '₹25 user charge at citizen service counters.',
+        kn: 'ನಾಗರಿಕ ಸೇವಾ ಕೇಂದ್ರಗಳಲ್ಲಿ ₹೨೫ ಶುಲ್ಕ.',
+      },
+      validityPeriod: {
+        en: 'SC/ST permanent; Category 1/2A/2B/3A/3B valid for 5 years.',
+        kn: 'ಎಸ್‌ಸಿ/ಎಸ್‌ಟಿ ಶಾಶ್ವತ; ಇತರ ಪ್ರವರ್ಗಗಳು ೫ ವರ್ಷಗಳು.',
+      },
+      steps: [
+        {
+          stepNumber: 1,
+          title: 'Collect Family Caste Records',
+          description: { en: 'Locate TC or family revenue records showing community affiliation.' },
+        },
+        {
+          stepNumber: 2,
+          title: 'Apply at Nadakacheri or Grama One',
+          description: { en: 'Submit application on Nadakacheri portal or Grama One.' },
+          officialUrl: 'https://nadakacheri.karnataka.gov.in',
+        },
+        {
+          stepNumber: 3,
+          title: 'Receive RD Number and Download',
+          description: { en: 'Download your digital certificate once approved by Tahsildar.' },
+        },
+      ],
+    },
+    document: {
+      id: 'doc-caste',
+      name: 'Caste / Category Certificate',
+      description: 'Official revenue certificate validating SC/ST/OBC category reservation.',
+      documentType: 'CERTIFICATE',
+      issuerId: 'iss-nadakacheri',
+      createdAt: '2026-11-10T00:00:00.000Z',
+      updatedAt: '2026-11-10T00:00:00.000Z',
+    },
+  },
+  'doc-age': {
+    id: 'doc-age',
+    name: 'Age Proof (Birth Certificate / Voter ID / Passport)',
+    description: 'Document verifying age of 60 years or above.',
+    documentType: 'IDENTITY_RECORD',
+    issuerId: null,
+    createdAt: '2026-11-10T00:00:00.000Z',
+    updatedAt: '2026-11-10T00:00:00.000Z',
+    issuer: null,
+    guide: {
+      purpose: {
+        en: 'Confirms completion of 60 years of age for senior citizen card and concessions.',
+        kn: 'ಹಿರಿಯ ನಾಗರಿಕರ ಗುರುತಿನ ಚೀಟಿಗಾಗಿ ೬೦ ವರ್ಷ ವಯಸ್ಸು ಪೂರ್ಣಗೊಂಡಿರುವುದನ್ನು ದೃಢೀಕರಿಸುತ್ತದೆ.',
+      },
+      prerequisites: [
+        {
+          name: 'Existing Photo ID',
+          description: { en: 'Voter ID, Passport, PAN Card, or Birth Certificate.' },
+        },
+        {
+          name: 'Address Proof',
+          description: { en: 'Ration card, Electricity bill, or Water bill.' },
+        },
+      ],
+      issuingAuthority: {
+        name: 'Election Commission of India / UIDAI',
+        department: 'Statutory Issuing Authorities',
+        portalUrl: 'https://voters.eci.gov.in',
+        physicalOffices: 'Taluk Office, Citizen Service Counters',
+        helpline: '1950',
+      },
+      processingTimeDays: 10,
+      fees: {
+        en: 'Statutory charges or free as per issuing department.',
+        kn: 'ನಿಗದಿತ ಕನಿಷ್ಠ ಶುಲ್ಕ ಅಥವಾ ಉಚಿತ.',
+      },
+      validityPeriod: {
+        en: 'Permanent official identity record.',
+        kn: 'ಶಾಶ್ವತ ಅಧಿಕೃತ ಗುರುತಿನ ದಾಖಲೆ.',
+      },
+      steps: [
+        {
+          stepNumber: 1,
+          title: 'Select Valid Photo ID',
+          description: {
+            en: 'Choose an existing recognized government ID that shows your full date of birth.',
+          },
+        },
+        {
+          stepNumber: 2,
+          title: 'Check Address Accuracy',
+          description: {
+            en: 'Ensure your current address matches before applying for state benefits.',
+          },
+        },
+      ],
+    },
+    document: {
+      id: 'doc-age',
+      name: 'Age Proof (Birth Certificate / Voter ID / Passport)',
+      description: 'Document verifying age of 60 years or above.',
+      documentType: 'IDENTITY_RECORD',
+      issuerId: null,
+      createdAt: '2026-11-10T00:00:00.000Z',
+      updatedAt: '2026-11-10T00:00:00.000Z',
+    },
+  },
+};
+
+export async function fetchDocumentById(idOrSlug: string): Promise<DocumentGuideDetail | null> {
+  const guide = SYNTHETIC_DOCUMENT_GUIDES[idOrSlug];
+  if (guide) return guide;
+
+  // Match by id or substring match
+  for (const item of Object.values(SYNTHETIC_DOCUMENT_GUIDES)) {
+    if (
+      item.id === idOrSlug ||
+      item.name.toLowerCase().includes(idOrSlug.toLowerCase()) ||
+      idOrSlug.toLowerCase().includes(item.id.toLowerCase())
+    ) {
+      return item;
+    }
+  }
+
+  return null;
+}
+
+export async function fetchJourneyForService(
+  serviceSlugOrId: string,
+): Promise<UserJourneyDetail | null> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+
+  // Try API first
+  try {
+    const res = await fetch(`${apiBase}/services/${encodeURIComponent(serviceSlugOrId)}/journeys`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // API unavailable, fall through to synthetic mock
+  }
+
+  // Fallback to synthetic sample services
+  const svc = SYNTHETIC_SAMPLE_SERVICES.find(
+    (s) => s.service.slug === serviceSlugOrId || s.service.id === serviceSlugOrId,
+  );
+  if (!svc || !svc.journey) return null;
+
+  const stepsWithProgress = svc.journey.steps.map((step, idx) => ({
+    ...step,
+    status: (idx === 0 ? 'IN_PROGRESS' : 'UPCOMING') as
+      'COMPLETED' | 'IN_PROGRESS' | 'NEXT' | 'UPCOMING' | 'BLOCKED',
+    completedAt: null,
+    isNextStep: idx === 0,
+    canComplete: idx === 0,
+  }));
+
+  const nextStep = stepsWithProgress[0] ?? null;
+
+  return {
+    id: `local-user-journey-${svc.service.slug}`,
+    serviceId: svc.service.id,
+    serviceSlug: svc.service.slug,
+    serviceTitle: svc.service.title,
+    journeyTemplateId: svc.journey.id,
+    title: svc.journey.title,
+    description: svc.journey.description,
+    status: 'IN_PROGRESS',
+    progress: {
+      totalSteps: stepsWithProgress.length,
+      completedSteps: 0,
+      currentStepIndex: 0,
+      percentage: 0,
+      status: 'IN_PROGRESS',
+      nextStep,
+    },
+    steps: stepsWithProgress,
+    nextStep,
+  };
+}
+
+export async function completeJourneyStep(
+  journeyId: string,
+  stepId: string,
+  options?: {
+    confirmation?: boolean;
+    referenceNumber?: string;
+    notes?: string;
+  },
+): Promise<UserJourneyDetail | null> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+
+  try {
+    const res = await fetch(
+      `${apiBase}/journeys/${encodeURIComponent(journeyId)}/steps/${encodeURIComponent(stepId)}/complete`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options ?? {}),
+      },
+    );
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    } else {
+      const errJson = await res.json().catch(() => null);
+      if (errJson?.error?.message) {
+        throw new Error(errJson.error.message);
+      }
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message) {
+      throw err;
+    }
+  }
+
+  return null;
+}
+
+const clientSideRagService = new RAGService();
+
+export async function interpretSearchQuery(
+  query: string,
+  language: SupportedLanguage = 'en',
+): Promise<SearchInterpretationResult> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+
+  try {
+    const res = await fetch(`${apiBase}/search/interpret`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, language }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // API unavailable, fall through to client-side RAG service
+  }
+
+  return clientSideRagService.interpretSearch(query, language, SYNTHETIC_SAMPLE_SERVICES);
+}
+
+export async function askAIAssistant(
+  message: string,
+  options: {
+    language?: SupportedLanguage;
+    serviceSlug?: string;
+    serviceId?: string;
+  } = {},
+): Promise<AIAssistResult> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  const language = options.language ?? 'en';
+
+  try {
+    const res = await fetch(`${apiBase}/ai/assist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        language,
+        context: {
+          serviceId: options.serviceId,
+          serviceSlug: options.serviceSlug,
+        },
+      }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // API unavailable, fall through to client-side RAG service
+  }
+
+  let serviceDetail: PublicServiceDetail | null = null;
+  if (options.serviceSlug || options.serviceId) {
+    serviceDetail =
+      SYNTHETIC_SAMPLE_SERVICES.find(
+        (s) => s.service.slug === options.serviceSlug || s.service.id === options.serviceId,
+      ) ?? null;
+  }
+
+  return clientSideRagService.assist({
+    message,
+    language,
+    service: serviceDetail,
+  });
 }

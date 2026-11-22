@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ProblemFirstSearch } from '@/components/ProblemFirstSearch';
 import { getWebEnv } from '@/lib/env';
 import { fetchCategories, fetchPublishedServices } from '@/lib/catalogue';
 import {
@@ -40,6 +42,7 @@ export default async function HomePage() {
         >
           Design System
         </Link>
+        <LanguageSwitcher compact />
       </Header>
 
       <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
@@ -59,31 +62,8 @@ export default async function HomePage() {
             </Paragraph>
           </div>
 
-          {/* Problem-First Search Bar */}
-          <form
-            action="/services"
-            method="GET"
-            role="search"
-            aria-label="Search government services"
-            className="rounded-lg border-2 border-civic-navy/20 bg-white p-2 sm:p-3 shadow-civic focus-within:border-civic-navy transition-all"
-          >
-            <label htmlFor="search-input" className="sr-only">
-              What do you need help with?
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                id="search-input"
-                name="q"
-                type="search"
-                autoComplete="off"
-                placeholder="What do you need help with? (e.g. scholarship, senior citizen card)"
-                className="flex-1 px-4 py-3 text-base text-civic-charcoal placeholder:text-civic-muted focus:outline-none bg-transparent"
-              />
-              <Button type="submit" variant="primary" size="md" className="sm:self-stretch">
-                Search Services
-              </Button>
-            </div>
-          </form>
+          {/* Problem-First Natural Language Search */}
+          <ProblemFirstSearch currentLanguage={env.NEXT_PUBLIC_DEFAULT_LANGUAGE} />
 
           {/* Quick Problem-First Suggestion Chips */}
           <div className="flex flex-wrap items-center gap-2 pt-1">

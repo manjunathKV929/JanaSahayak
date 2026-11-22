@@ -54,10 +54,13 @@ describe('@janasahayak/db Client & Migrator', () => {
 
   it('loads all core migration files in sorted order with sha256 checksums', async () => {
     const files = await loadMigrationFiles(getDefaultMigrationsDir());
-    assert.equal(files.length, 3);
+    assert.equal(files.length, 6);
     assert.equal(files[0]?.name, '0000_bootstrap.sql');
     assert.equal(files[1]?.name, '0001_core_content_model.sql');
     assert.equal(files[2]?.name, '0002_seed_synthetic_sample.sql');
+    assert.equal(files[3]?.name, '0003_document_guides.sql');
+    assert.equal(files[4]?.name, '0004_journey_engine.sql');
+    assert.equal(files[5]?.name, '0005_localized_content.sql');
 
     for (const file of files) {
       assert.match(file.checksum, /^[a-f0-9]{64}$/);

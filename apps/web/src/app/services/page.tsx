@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { fetchCategories, fetchPublishedServices } from '@/lib/catalogue';
 import { getWebEnv } from '@/lib/env';
 import {
@@ -52,6 +53,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         >
           Design System
         </Link>
+        <LanguageSwitcher compact />
       </Header>
 
       <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

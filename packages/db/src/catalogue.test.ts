@@ -265,4 +265,125 @@ describe('@janasahayak/db Public Catalogue Repository', () => {
     assert.equal(sources.length, 1);
     assert.equal(sources[0]?.publisher, 'e-Governance Dept');
   });
+
+  test('retrieves localized service version when requested language exists', async () => {
+    const mockClient: Queryable = {
+      query: async (sql, params) => {
+        const sqlStr = String(sql);
+        if (sqlStr.includes('FROM service_records')) {
+          return {
+            rows: [
+              {
+                id: 's1',
+                slug: 'synthetic-post-matric-scholarship',
+                service_type: 'SCHOLARSHIP',
+                title: '[Synthetic Sample] Post-Matric Scholarship',
+                short_description: 'Description',
+                department_name: 'Social Welfare',
+                state_code: 'KA',
+                status: 'PUBLISHED',
+                current_version_id: 'v1_en',
+                created_at: new Date('2026-11-10T00:00:00Z'),
+                updated_at: new Date('2026-11-17T00:00:00Z'),
+              },
+            ],
+          };
+        }
+        if (sqlStr.includes('WHERE service_id = $1 AND language = $2')) {
+          assert.equal(params?.[1], 'kn');
+          return {
+            rows: [
+              {
+                id: 'v2_kn',
+                service_id: 's1',
+                version_number: 2,
+                content: {
+                  title: '[ಮಾದರಿ] ಮೆಟ್ರಿಕ್-ನಂತರದ ವಿದ್ಯಾರ್ಥಿವೇತನ ಯೋಜನೆ (ಕರ್ನಾಟಕ)',
+                  department: 'ಸಮಾಜ ಕಲ್ಯಾಣ ಇಲಾಖೆ',
+                },
+                language: 'kn',
+                effective_from: '2026-01-01',
+                effective_to: null,
+                created_by: 'u1',
+                approved_by: 'u2',
+                created_at: new Date('2026-11-15T00:00:00Z'),
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      },
+    };
+
+    const detail = await getPublishedServiceBySlug(
+      mockClient,
+      'synthetic-post-matric-scholarship',
+      'kn',
+    );
+    assert.ok(detail);
+    assert.equal(detail.version?.language, 'kn');
+    assert.equal(
+      (detail.version?.content as { title: string }).title,
+      '[ಮಾದರಿ] ಮೆಟ್ರಿಕ್-ನಂತರದ ವಿದ್ಯಾರ್ಥಿವೇತನ ಯೋಜನೆ (ಕರ್ನಾಟಕ)',
+    );
+  });
+
+  test('falls back to default English version when requested language is unavailable', async () => {
+    const mockClient: Queryable = {
+      query: async (sql) => {
+        const sqlStr = String(sql);
+        if (sqlStr.includes('FROM service_records')) {
+          return {
+            rows: [
+              {
+                id: 's1',
+                slug: 'synthetic-post-matric-scholarship',
+                service_type: 'SCHOLARSHIP',
+                title: '[Synthetic Sample] Post-Matric Scholarship',
+                short_description: 'Description',
+                department_name: 'Social Welfare',
+                state_code: 'KA',
+                status: 'PUBLISHED',
+                current_version_id: 'v1_en',
+                created_at: new Date('2026-11-10T00:00:00Z'),
+                updated_at: new Date('2026-11-17T00:00:00Z'),
+              },
+            ],
+          };
+        }
+        // Simulated: language query returns empty rows (no translation available)
+        if (sqlStr.includes('WHERE service_id = $1 AND language = $2')) {
+          return { rows: [] };
+        }
+        // Fallback query by current_version_id
+        if (sqlStr.includes('WHERE id = $1')) {
+          return {
+            rows: [
+              {
+                id: 'v1_en',
+                service_id: 's1',
+                version_number: 1,
+                content: { summary: 'English fallback guidance' },
+                language: 'en',
+                effective_from: '2026-04-01',
+                effective_to: null,
+                created_by: 'u1',
+                approved_by: 'u2',
+                created_at: new Date('2026-11-15T00:00:00Z'),
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      },
+    };
+
+    const detail = await getPublishedServiceBySlug(
+      mockClient,
+      'synthetic-post-matric-scholarship',
+      'kn',
+    );
+    assert.ok(detail);
+    assert.equal(detail.version?.language, 'en');
+  });
 });

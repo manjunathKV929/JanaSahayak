@@ -5,8 +5,23 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ['Manrope', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: [
+          'Manrope',
+          'Inter',
+          'Noto Sans Devanagari',
+          'Noto Sans Kannada',
+          'system-ui',
+          '-apple-system',
+          'sans-serif',
+        ],
+        sans: [
+          'Inter',
+          'Noto Sans Devanagari',
+          'Noto Sans Kannada',
+          'system-ui',
+          '-apple-system',
+          'sans-serif',
+        ],
       },
       colors: {
         civic: {

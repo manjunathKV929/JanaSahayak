@@ -54,6 +54,16 @@ async function validateOpenApi(): Promise<void> {
       '/categories',
       '/services/{id}/eligibility/questions',
       '/services/{id}/eligibility/evaluate',
+      '/documents/{id}',
+      '/services/{id}/documents',
+      '/services/{id}/journeys',
+      '/journeys/{id}',
+      '/journeys/{id}/steps/{stepId}/complete',
+      '/languages',
+      '/translate',
+      '/translate/batch',
+      '/search/interpret',
+      '/ai/assist',
     ];
 
     for (const requiredPath of requiredPaths) {

@@ -139,13 +139,19 @@ export async function searchPublishedServices(
 
 export async function getPublishedServiceBySlug(
   client: Queryable,
-  slug: string,
+  slugOrId: string,
+  language?: SupportedLanguage | string,
 ): Promise<PublicServiceDetail | null> {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+  const whereClause = isUuid
+    ? `(id::text = $1 OR slug = $1) AND status = 'PUBLISHED'`
+    : `slug = $1 AND status = 'PUBLISHED'`;
+
   const serviceRes = await client.query(
     `SELECT id, slug, service_type, title, short_description, department_name, state_code, status, current_version_id, created_at, updated_at
      FROM service_records
-     WHERE slug = $1 AND status = 'PUBLISHED'`,
-    [slug],
+     WHERE ${whereClause}`,
+    [slugOrId],
   );
 
   const rawService = serviceRes.rows[0] as Parameters<typeof mapServiceRow>[0] | undefined;
@@ -154,9 +160,25 @@ export async function getPublishedServiceBySlug(
   }
   const service: ServiceRecord = mapServiceRow(rawService);
 
-  // Version
+  // Version with language fallback (requested language -> default current_version_id -> en)
   let version: ServiceVersionRecord | null = null;
-  if (service.currentVersionId) {
+  if (language && language !== 'en') {
+    const langVersionRes = await client.query(
+      `SELECT id, service_id, version_number, content, language, effective_from, effective_to, created_by, approved_by, created_at
+       FROM service_versions
+       WHERE service_id = $1 AND language = $2
+       ORDER BY version_number DESC
+       LIMIT 1`,
+      [service.id, language],
+    );
+    const rawLangV = langVersionRes.rows[0] as Record<string, unknown> | undefined;
+    if (rawLangV) {
+      version = mapServiceVersionRow(rawLangV);
+    }
+  }
+
+  // Fallback to service default version if requested language is unavailable or is default
+  if (!version && service.currentVersionId) {
     const versionRes = await client.query(
       `SELECT id, service_id, version_number, content, language, effective_from, effective_to, created_by, approved_by, created_at
        FROM service_versions
@@ -296,6 +318,8 @@ export async function getPublishedServiceBySlug(
 
   return { service, version, sources, documents, rules, journey, deadlines };
 }
+
+export const getPublishedServiceByIdOrSlug = getPublishedServiceBySlug;
 
 export async function getPublicServiceSources(
   client: Queryable,

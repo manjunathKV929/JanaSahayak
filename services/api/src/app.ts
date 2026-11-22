@@ -10,9 +10,13 @@ import { requestIdSchema } from '@janasahayak/validation';
 import type { Pool } from 'pg';
 import { AppError, buildErrorResponse, mapStatusCodeToErrorCode } from './errors.js';
 import { registerAdminRoutes } from './routes/admin.js';
+import { registerAIRoutes } from './routes/ai.js';
 import { registerCatalogueRoutes } from './routes/catalogue.js';
+import { registerDocumentsRoutes } from './routes/documents.js';
 import { registerEligibilityRoutes } from './routes/eligibility.js';
 import { registerHealthRoutes } from './routes/health.js';
+import { registerI18nRoutes } from './routes/i18n.js';
+import { registerJourneysRoutes } from './routes/journeys.js';
 
 export const API_SERVICE_NAME = 'janasahayak-api';
 export const API_VERSION = '0.1.0';
@@ -22,6 +26,7 @@ export interface BuildAppOptions {
   env: ApiEnv;
   checkDatabase?: () => Promise<'up' | 'down' | 'not_configured'>;
   db?: Queryable;
+  ragService?: import('@janasahayak/ai').RAGService;
   logger?: boolean;
 }
 
@@ -139,6 +144,15 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
           name: 'Eligibility',
           description: 'Deterministic eligibility evaluation and questionnaire endpoints',
         },
+        {
+          name: 'Documents',
+          description: 'Authoritative document guide and issuing authority endpoints',
+        },
+        {
+          name: 'AI Assistant',
+          description:
+            'Grounded civic assistance, query interpretation, and provenance verification endpoints',
+        },
       ],
     },
   });
@@ -231,6 +245,21 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
       await registerEligibilityRoutes(v1, {
         db: activeDb,
+      });
+
+      await registerDocumentsRoutes(v1, {
+        db: activeDb,
+      });
+
+      await registerJourneysRoutes(v1, {
+        db: activeDb,
+      });
+
+      await registerI18nRoutes(v1);
+
+      await registerAIRoutes(v1, {
+        db: activeDb,
+        ...(options.ragService ? { ragService: options.ragService } : {}),
       });
 
       v1.get(

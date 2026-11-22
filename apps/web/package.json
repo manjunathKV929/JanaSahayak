@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@janasahayak/ai": "*",
     "@janasahayak/config": "*",
+    "@janasahayak/i18n": "*",
     "@janasahayak/types": "*",
     "@janasahayak/ui": "*",
     "next": "^15.3.1",
