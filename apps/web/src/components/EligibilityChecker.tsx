@@ -106,7 +106,7 @@ export function EligibilityChecker({ rules, questions, language = 'en' }: Eligib
                       {q.options.map((opt) => (
                         <label
                           key={opt.key}
-                          className="flex items-center gap-3 p-3 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal transition-colors"
+                          className="flex items-center gap-3 p-3 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal transition-colors min-h-[44px]"
                         >
                           <input
                             type="radio"
@@ -114,33 +114,33 @@ export function EligibilityChecker({ rules, questions, language = 'en' }: Eligib
                             value={opt.key}
                             checked={val === opt.key}
                             onChange={() => handleInputChange(q.key, opt.key)}
-                            className="w-4 h-4 text-civic-navy border-civic-border focus:ring-civic-navy"
+                            className="w-4 h-4 text-civic-navy border-civic-border focus:ring-civic-navy shrink-0"
                           />
                           <span>{opt.label[language] ?? opt.label['en'] ?? opt.key}</span>
                         </label>
                       ))}
                     </div>
                   ) : q.answerType === 'boolean' ? (
-                    <div className="flex gap-3 pt-1 pl-7">
-                      <label className="flex items-center gap-2 px-4 py-2 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal">
+                    <div className="flex flex-wrap gap-3 pt-1 pl-7">
+                      <label className="flex items-center gap-2 px-5 py-2.5 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal min-h-[44px]">
                         <input
                           type="radio"
                           name={q.key}
                           value="true"
                           checked={val === true}
                           onChange={() => handleInputChange(q.key, true)}
-                          className="w-4 h-4 text-civic-navy"
+                          className="w-4 h-4 text-civic-navy shrink-0"
                         />
                         <span>Yes</span>
                       </label>
-                      <label className="flex items-center gap-2 px-4 py-2 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal">
+                      <label className="flex items-center gap-2 px-5 py-2.5 rounded border border-civic-border hover:bg-civic-surface cursor-pointer text-sm font-medium text-civic-charcoal min-h-[44px]">
                         <input
                           type="radio"
                           name={q.key}
                           value="false"
                           checked={val === false}
                           onChange={() => handleInputChange(q.key, false)}
-                          className="w-4 h-4 text-civic-navy"
+                          className="w-4 h-4 text-civic-navy shrink-0"
                         />
                         <span>No</span>
                       </label>

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { Queryable } from '@janasahayak/db';
 import { findDocumentById, getDocumentsForService } from '@janasahayak/db';
-import { documentIdParamSchema } from '@janasahayak/validation';
+import { documentGuideQuerySchema, documentIdParamSchema } from '@janasahayak/validation';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
 export interface DocumentsRouteOptions {
@@ -13,6 +13,34 @@ const metaJsonSchema = {
   required: ['requestId'],
   properties: {
     requestId: { type: 'string' },
+  },
+} as const;
+
+const errorJsonSchema = {
+  type: 'object',
+  required: ['error', 'meta'],
+  properties: {
+    error: {
+      type: 'object',
+      required: ['code', 'message', 'details'],
+      properties: {
+        code: { type: 'string' },
+        message: { type: 'string' },
+        details: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['message'],
+            properties: {
+              field: { type: 'string' },
+              message: { type: 'string' },
+              code: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    meta: metaJsonSchema,
   },
 } as const;
 
@@ -36,6 +64,20 @@ export async function registerDocumentsRoutes(
             id: {
               type: 'string',
               description: 'Document UUID or slug identifier',
+            },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            returnTo: {
+              type: 'string',
+              description: 'Safe relative return-to path for post-guide navigation',
+            },
+            language: {
+              type: 'string',
+              enum: ['en', 'hi', 'kn'],
+              description: 'Optional preferred language',
             },
           },
         },
@@ -135,30 +177,12 @@ export async function registerDocumentsRoutes(
             },
           },
           400: {
-            description: 'Invalid document identifier',
-            type: 'object',
-            properties: {
-              error: {
-                type: 'object',
-                properties: {
-                  code: { type: 'string' },
-                  message: { type: 'string' },
-                },
-              },
-            },
+            description: 'Invalid document identifier or query parameters',
+            ...errorJsonSchema,
           },
           404: {
             description: 'Document not found',
-            type: 'object',
-            properties: {
-              error: {
-                type: 'object',
-                properties: {
-                  code: { type: 'string' },
-                  message: { type: 'string' },
-                },
-              },
-            },
+            ...errorJsonSchema,
           },
         },
       },
@@ -167,6 +191,11 @@ export async function registerDocumentsRoutes(
       const parseResult = documentIdParamSchema.safeParse(request.params);
       if (!parseResult.success) {
         throw new AppError(400, 'VALIDATION_ERROR', 'Invalid document identifier.');
+      }
+
+      const queryResult = documentGuideQuerySchema.safeParse(request.query ?? {});
+      if (!queryResult.success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid query parameters.');
       }
 
       const { id } = parseResult.data;
@@ -241,16 +270,7 @@ export async function registerDocumentsRoutes(
           },
           404: {
             description: 'Service not found or has no documents configured',
-            type: 'object',
-            properties: {
-              error: {
-                type: 'object',
-                properties: {
-                  code: { type: 'string' },
-                  message: { type: 'string' },
-                },
-              },
-            },
+            ...errorJsonSchema,
           },
         },
       },

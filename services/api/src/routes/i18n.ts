@@ -3,6 +3,7 @@ import { BhashiniService, SUPPORTED_LANGUAGES_LIST, getLanguageMeta } from '@jan
 import type { ApiErrorDetail } from '@janasahayak/types';
 import { batchTranslateRequestSchema, translateRequestSchema } from '@janasahayak/validation';
 import type { z } from 'zod';
+import { createTieredRateLimitConfig } from '../config/rate-limits.js';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
 export interface I18nRouteOptions {
@@ -95,6 +96,7 @@ export async function registerI18nRoutes(
   app.post(
     '/translate',
     {
+      config: createTieredRateLimitConfig('TRANSLATION'),
       schema: {
         tags: ['Multilingual & Translation'],
         summary: 'Translate text via Bhashini AI with numeric preservation',
@@ -153,6 +155,7 @@ export async function registerI18nRoutes(
   app.post(
     '/translate/batch',
     {
+      config: createTieredRateLimitConfig('TRANSLATION'),
       schema: {
         tags: ['Multilingual & Translation'],
         summary: 'Batch translate text items via Bhashini AI',

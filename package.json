@@ -26,7 +26,8 @@
     "test:coverage": "node scripts/run-tests.mjs --coverage",
     "db:migrate": "npm run migrate --workspace=@janasahayak/db",
     "openapi:validate": "npm run openapi:validate --workspace=@janasahayak/api",
-    "clean": "node -e \"const fs=require('fs'); for (const p of ['packages/types/dist','packages/i18n/dist','packages/ui/dist','packages/validation/dist','packages/ai/dist','packages/config/dist','packages/db/dist','services/api/dist','apps/web/.next','coverage']) fs.rmSync(p,{recursive:true,force:true});\""
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['packages/types/dist','packages/i18n/dist','packages/ui/dist','packages/validation/dist','packages/ai/dist','packages/config/dist','packages/db/dist','services/api/dist','apps/web/.next','coverage']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "security:audit": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

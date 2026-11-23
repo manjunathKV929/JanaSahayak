@@ -361,3 +361,153 @@ export interface CatalogueCategory {
   category: string;
   count: number;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 13 — Advanced Features Domain Types
+// ---------------------------------------------------------------------------
+
+export type VoiceRecognitionState =
+  'IDLE' | 'LISTENING' | 'PROCESSING' | 'CONFIRMING' | 'ERROR' | 'UNSUPPORTED';
+
+export type VoiceSynthesisState = 'IDLE' | 'PLAYING' | 'PAUSED' | 'ERROR';
+
+export type VoiceLanguage = 'en-IN' | 'hi-IN' | 'kn-IN';
+
+export interface VoiceCommandResult {
+  transcript: string;
+  confidence: number;
+  language: VoiceLanguage;
+}
+
+export type DeadlineStatus = 'UPCOMING' | 'OPEN' | 'CLOSING_SOON' | 'EXPIRED';
+
+export interface DeadlineSummary {
+  id: string;
+  serviceId: string;
+  serviceSlug: string;
+  serviceTitle: string;
+  category: string;
+  stateCode: string | null;
+  name: string;
+  opensAt: string | null;
+  closesAt: string | null;
+  daysRemaining: number | null;
+  status: DeadlineStatus;
+  sourceUrl: string | null;
+  sourcePublisher: string | null;
+  lastVerifiedAt: string | null;
+}
+
+export type CenterType =
+  'B1_K1_CENTRE' | 'NADAKACHERI' | 'TALUK_OFFICE' | 'DISTRICT_OFFICE' | 'SEVA_KENDRA' | 'OTHER';
+
+export type AssistanceType =
+  | 'BIOMETRIC_EKYC'
+  | 'DOCUMENT_SUBMISSION'
+  | 'APPLICATION_FILING'
+  | 'IN_PERSON_ASSISTANCE'
+  | 'GRIEVANCE_DESK';
+
+export interface LocationRecord {
+  id: string;
+  name: string;
+  centerType: CenterType;
+  address: string;
+  district: string;
+  taluk: string | null;
+  stateCode: string;
+  pincode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  contactPhone: string | null;
+  operatingHours: string | null;
+  verifiedSourceUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceLocationRecord {
+  serviceId: string;
+  locationId: string;
+  assistanceType: AssistanceType;
+}
+
+export interface LocationSummary extends LocationRecord {
+  supportedServices: Array<{
+    serviceId: string;
+    serviceSlug: string;
+    serviceTitle: string;
+    assistanceType: AssistanceType;
+  }>;
+}
+
+export type FamilyRelationship =
+  'SELF' | 'SPOUSE' | 'CHILD' | 'PARENT' | 'SIBLING' | 'GRANDPARENT' | 'OTHER';
+
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+
+export interface FamilyMemberProfile {
+  id?: string | undefined;
+  name: string;
+  relationship: FamilyRelationship;
+  age: number;
+  gender: Gender;
+  occupation: string;
+  educationLevel: string;
+  annualIncome?: number | null | undefined;
+  casteCategory?: string | null | undefined;
+  disability?: boolean | undefined;
+  residenceState?: string | undefined;
+}
+
+export interface FamilyScanItemResult {
+  serviceId: string;
+  slug: string;
+  title: string;
+  category: string;
+  departmentName: string;
+  reason: string;
+  confidence: 'POTENTIALLY_ELIGIBLE' | 'CHECK_REQUIRED';
+}
+
+export interface FamilyMemberScanResult {
+  memberId: string;
+  memberName: string;
+  relationship: FamilyRelationship;
+  eligibleServices: FamilyScanItemResult[];
+}
+
+export interface FamilyScanResponse {
+  results: FamilyMemberScanResult[];
+  scannedCount: number;
+  totalEligibleFound: number;
+  privacyDisclaimer: string;
+}
+
+export type LifeEventKey =
+  | 'EDUCATION_HIGHER'
+  | 'CHILDBIRTH_MATERNITY'
+  | 'EMPLOYMENT_LIVELIHOOD'
+  | 'SENIOR_RETIREMENT'
+  | 'BEREAVEMENT_SURVIVOR';
+
+export interface LifeEventServiceBundleItem {
+  serviceId: string;
+  slug: string;
+  title: string;
+  category: string;
+  importance: 'CRITICAL' | 'RECOMMENDED' | 'OPTIONAL';
+  typicalTimeline: string;
+  requiredDocuments: string[];
+}
+
+export interface LifeEventRecord {
+  id: string;
+  key: LifeEventKey;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  icon: string;
+  order: number;
+  serviceBundles: LifeEventServiceBundleItem[];
+}

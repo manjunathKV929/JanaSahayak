@@ -5,6 +5,7 @@ import { getPublishedServiceBySlug, searchPublishedServices } from '@janasahayak
 import type { ApiErrorDetail, PublicServiceDetail, SupportedLanguage } from '@janasahayak/types';
 import { aiAssistBodySchema, searchInterpretationBodySchema } from '@janasahayak/validation';
 import type { z } from 'zod';
+import { createTieredRateLimitConfig } from '../config/rate-limits.js';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
 export interface AIRouteOptions {
@@ -43,6 +44,7 @@ export async function registerAIRoutes(
   app.post(
     '/search/interpret',
     {
+      config: createTieredRateLimitConfig('AI'),
       schema: {
         description:
           'Natural language search query interpretation with civic intent classification, PII redaction, and suggested clarifying questions.',
@@ -176,6 +178,7 @@ export async function registerAIRoutes(
   app.post(
     '/ai/assist',
     {
+      config: createTieredRateLimitConfig('AI'),
       schema: {
         description:
           'Grounded AI assistance for citizen queries, bounded strictly by official government records with source citations and conservative refusal.',

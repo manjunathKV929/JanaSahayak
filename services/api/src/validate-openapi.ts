@@ -64,6 +64,13 @@ async function validateOpenApi(): Promise<void> {
       '/translate/batch',
       '/search/interpret',
       '/ai/assist',
+      '/deadlines',
+      '/services/{id}/deadlines',
+      '/locations',
+      '/services/{id}/locations',
+      '/life-events',
+      '/life-events/{key}',
+      '/family/scan',
     ];
 
     for (const requiredPath of requiredPaths) {

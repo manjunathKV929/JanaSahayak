@@ -5,7 +5,13 @@ import { DocumentChecklist } from '@/components/DocumentChecklist';
 import { EligibilityChecker } from '@/components/EligibilityChecker';
 import { JourneyStepper } from '@/components/JourneyStepper';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { fetchEligibilityQuestions, fetchPublishedServiceBySlug } from '@/lib/catalogue';
+import { LocationCard } from '@/components/LocationCard';
+import { TextToSpeechReader } from '@/components/TextToSpeechReader';
+import {
+  fetchEligibilityQuestions,
+  fetchLocations,
+  fetchPublishedServiceBySlug,
+} from '@/lib/catalogue';
 import { getWebEnv } from '@/lib/env';
 import type { SupportedLanguage } from '@janasahayak/types';
 import {
@@ -47,6 +53,7 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
   const { service, version, sources, documents, rules, journey, deadlines } = detail;
   const primarySource = sources[0];
   const questions = await fetchEligibilityQuestions(slug);
+  const locations = await fetchLocations({ serviceId: service.id });
 
   const displayTitle =
     (typeof version?.content?.title === 'string' ? version.content.title : null) ?? service.title;
@@ -112,7 +119,7 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
             {displayShortDesc}
           </Paragraph>
 
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <VerificationBadge
               status={primarySource?.verificationStatus ?? 'UNVERIFIED'}
               lastVerifiedAt={
@@ -124,6 +131,11 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
                     })
                   : undefined
               }
+            />
+            <TextToSpeechReader
+              text={`${displayTitle}. ${displayShortDesc}`}
+              language={activeLanguage}
+              label="Read Service Aloud"
             />
           </div>
         </div>
@@ -331,6 +343,24 @@ export default async function ServiceDetailPage({ params, searchParams }: Servic
                 </p>
               </div>
             </Card>
+          </section>
+        )}
+
+        {/* Nearby Service Desks & Physical Assistance Centers */}
+        {locations.length > 0 && (
+          <section aria-labelledby="locations-heading" className="space-y-4">
+            <Heading as="h2" size="h2" id="locations-heading" className="text-civic-navy">
+              Nearby Official Service Centers & Desks
+            </Heading>
+            <p className="text-xs text-civic-muted">
+              You can visit these verified government citizen service centers for biometric e-KYC,
+              document submission, or application assistance for this scheme:
+            </p>
+            <div className="space-y-3">
+              {locations.map((loc) => (
+                <LocationCard key={loc.id} location={loc} />
+              ))}
+            </div>
           </section>
         )}
 

@@ -17,6 +17,10 @@ import { registerEligibilityRoutes } from './routes/eligibility.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerI18nRoutes } from './routes/i18n.js';
 import { registerJourneysRoutes } from './routes/journeys.js';
+import { registerDeadlinesRoutes } from './routes/deadlines.js';
+import { registerLocationsRoutes } from './routes/locations.js';
+import { registerLifeEventsRoutes } from './routes/life-events.js';
+import { registerFamilyRoutes } from './routes/family.js';
 
 export const API_SERVICE_NAME = 'janasahayak-api';
 export const API_VERSION = '0.1.0';
@@ -94,6 +98,10 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       },
     },
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    xContentTypeOptions: true,
+    xFrameOptions: { action: 'deny' },
+    crossOriginResourcePolicy: { policy: 'same-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
     hsts:
       env.NODE_ENV === 'production'
         ? { maxAge: 31536000, includeSubDomains: true, preload: true }
@@ -159,7 +167,28 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   app.addHook('onSend', async (request, reply, payload) => {
     reply.header('X-Request-ID', request.id);
-    reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    reply.header(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()',
+    );
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+
+    // Sensitive, administrative, or non-deterministic endpoints must disable caching
+    const url = request.url;
+    if (
+      url.includes('/admin') ||
+      url.includes('/ai') ||
+      url.includes('/search/interpret') ||
+      url.includes('/translate') ||
+      url.includes('/health') ||
+      url.includes('/ready') ||
+      request.method !== 'GET'
+    ) {
+      reply.header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      reply.header('Pragma', 'no-cache');
+    }
+
     return payload;
   });
 
@@ -174,6 +203,26 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       return reply
         .code(error.statusCode)
         .send(buildErrorResponse(error.code, error.message, request.id, error.details));
+    }
+
+    if (
+      error.name === 'ZodError' &&
+      'issues' in error &&
+      Array.isArray(
+        (error as unknown as { issues: Array<{ path: string[]; message: string }> }).issues,
+      )
+    ) {
+      const details = (
+        error as unknown as { issues: Array<{ path: string[]; message: string }> }
+      ).issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      return reply
+        .code(400)
+        .send(
+          buildErrorResponse('VALIDATION_ERROR', 'The request is invalid.', request.id, details),
+        );
     }
 
     if ('validation' in error && Array.isArray(error.validation)) {
@@ -261,6 +310,18 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
         db: activeDb,
         ...(options.ragService ? { ragService: options.ragService } : {}),
       });
+
+      await registerDeadlinesRoutes(v1, {
+        db: activeDb,
+      });
+
+      await registerLocationsRoutes(v1, {
+        db: activeDb,
+      });
+
+      await registerLifeEventsRoutes(v1);
+
+      await registerFamilyRoutes(v1);
 
       v1.get(
         '/openapi.json',

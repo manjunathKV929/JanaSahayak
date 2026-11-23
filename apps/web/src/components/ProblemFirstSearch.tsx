@@ -9,6 +9,7 @@ import type {
 } from '@janasahayak/types';
 import { Alert, Button, Card, Text, VerificationBadge } from '@janasahayak/ui';
 import { interpretSearchQuery } from '@/lib/catalogue';
+import { VoiceInputButton } from './VoiceInputButton';
 
 export interface ProblemFirstSearchProps {
   currentLanguage?: SupportedLanguage;
@@ -73,11 +74,31 @@ export function ProblemFirstSearch({
             placeholder="What do you need help with? (e.g. college scholarship, senior citizen card)"
             className="flex-1 px-4 py-3 text-base text-civic-charcoal placeholder:text-civic-muted focus:outline-none bg-transparent"
           />
-          <Button type="submit" variant="primary" size="md" disabled={loading || !query.trim()}>
-            {loading ? 'Interpreting...' : 'Search Services'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <VoiceInputButton
+              language={currentLanguage}
+              onSearch={(voiceText) => {
+                setQuery(voiceText);
+                handleSearch(voiceText);
+              }}
+            />
+            <Button type="submit" variant="primary" size="md" disabled={loading || !query.trim()}>
+              {loading ? 'Interpreting...' : 'Search Services'}
+            </Button>
+          </div>
         </div>
       </form>
+
+      {/* Live status announcement for screen readers */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {loading
+          ? 'Searching and interpreting government services...'
+          : interpretation
+            ? `Found ${interpretation.matches.length} matching verified services for ${
+                INTENT_LABELS[interpretation.intent] ?? 'your query'
+              }.`
+            : ''}
+      </div>
 
       {/* Interpretation Results */}
       {interpretation && (

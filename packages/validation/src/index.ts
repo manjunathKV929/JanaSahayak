@@ -7,3 +7,7 @@ export * from './documents.js';
 export * from './journeys.js';
 export * from './i18n.js';
 export * from './ai.js';
+export * from './security.js';
+export * from './advanced.js';
+export * from './advanced.js';
+

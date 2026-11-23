@@ -136,15 +136,25 @@ export function AIAssistant({
       {/* Query Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-2">
+          <label htmlFor="ai-assistant-input" className="sr-only">
+            Ask a question about this service
+          </label>
           <input
+            id="ai-assistant-input"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type your question (e.g. What is the income limit?)"
-            className="flex-1 px-4 py-2.5 rounded-md border border-civic-border bg-civic-ivory text-sm text-civic-charcoal placeholder:text-civic-muted focus:outline-none focus:border-civic-navy"
+            className="flex-1 px-4 py-2.5 rounded-md border border-civic-border bg-civic-ivory text-sm text-civic-charcoal placeholder:text-civic-muted focus:outline-none focus:border-civic-navy min-h-[44px]"
             disabled={loading}
           />
-          <Button type="submit" variant="primary" size="md" disabled={loading || !query.trim()}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={loading || !query.trim()}
+            className="min-h-[44px]"
+          >
             {loading ? 'Consulting Official Records...' : 'Ask Assistant'}
           </Button>
         </div>
@@ -152,7 +162,11 @@ export function AIAssistant({
 
       {/* Result Display */}
       {result && (
-        <div className="space-y-4 pt-4 border-t border-civic-border">
+        <div
+          role="status"
+          aria-live="polite"
+          className="space-y-4 pt-4 border-t border-civic-border"
+        >
           <div
             className={`p-4 rounded-lg border ${
               result.refusal

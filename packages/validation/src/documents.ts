@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { safeRelativePathSchema } from './security.js';
 
 export const documentIdParamSchema = z.object({
   id: z
@@ -11,7 +12,7 @@ export const documentIdParamSchema = z.object({
 export type DocumentIdParam = z.infer<typeof documentIdParamSchema>;
 
 export const documentGuideQuerySchema = z.object({
-  returnTo: z.string().max(300).optional(),
+  returnTo: safeRelativePathSchema.optional(),
   language: z.enum(['en', 'hi', 'kn'] as const).optional(),
 });
 

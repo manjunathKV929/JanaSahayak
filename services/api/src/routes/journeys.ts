@@ -21,6 +21,7 @@ import type {
   UserJourneyDetail,
   UserJourneyProgressRecord,
 } from '@janasahayak/types';
+import { createTieredRateLimitConfig } from '../config/rate-limits.js';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
 export interface JourneysRouteOptions {
@@ -325,6 +326,7 @@ export async function registerJourneysRoutes(
   app.post(
     '/journeys/:id/steps/:stepId/complete',
     {
+      config: createTieredRateLimitConfig('SENSITIVE_ACTION'),
       schema: {
         description:
           'Mark a journey step complete after validating prerequisites and completion rules',

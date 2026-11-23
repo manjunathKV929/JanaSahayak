@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#183B50" />
+  <!-- Civic Editorial Emblem: Stepped Pillar & Open Book of Public Service -->
+  <g fill="none" stroke="#F7F6F1" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top Capital -->
+    <path d="M128 144h256" />
+    <path d="M156 112h200" />
+    <!-- Three Pillars -->
+    <path d="M172 144v160" />
+    <path d="M256 144v160" />
+    <path d="M340 144v160" />
+    <!-- Base Platform -->
+    <path d="M116 304h280" stroke="#386B55" stroke-width="26" />
+    <path d="M96 342h320" stroke="#F7F6F1" stroke-width="22" />
+    <!-- Central Guidance Spark / Sun -->
+    <circle cx="256" cy="224" r="22" fill="#386B55" stroke="#F7F6F1" stroke-width="10" />
+  </g>
+</svg>

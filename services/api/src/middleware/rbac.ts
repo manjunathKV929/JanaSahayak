@@ -74,6 +74,15 @@ export function authenticateAdmin(isProduction: boolean) {
       }
     }
 
+    request.log.warn({
+      event: 'SECURITY_ACCESS_DENIED',
+      reason: 'UNAUTHORIZED',
+      url: request.url,
+      method: request.method,
+      ip: request.ip,
+      requestId: request.id,
+    });
+
     throw new AppError(
       401,
       'UNAUTHORIZED',
@@ -85,6 +94,15 @@ export function authenticateAdmin(isProduction: boolean) {
 export function requireRole(allowedRoles: Role[]) {
   return async function roleGuard(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
     if (!request.actor) {
+      request.log.warn({
+        event: 'SECURITY_ACCESS_DENIED',
+        reason: 'UNAUTHORIZED',
+        url: request.url,
+        method: request.method,
+        ip: request.ip,
+        requestId: request.id,
+      });
+
       throw new AppError(
         401,
         'UNAUTHORIZED',
@@ -93,6 +111,18 @@ export function requireRole(allowedRoles: Role[]) {
     }
 
     if (!allowedRoles.includes(request.actor.role)) {
+      request.log.warn({
+        event: 'SECURITY_ACCESS_DENIED',
+        reason: 'FORBIDDEN',
+        role: request.actor.role,
+        actorId: request.actor.id,
+        allowedRoles,
+        url: request.url,
+        method: request.method,
+        ip: request.ip,
+        requestId: request.id,
+      });
+
       throw new AppError(
         403,
         'FORBIDDEN',

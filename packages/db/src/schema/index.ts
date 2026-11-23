@@ -6,3 +6,6 @@ export * from './audit.js';
 export * from './reviews.js';
 export * from './admin.js';
 export * from './catalogue.js';
+export * from './advanced.js';
+export * from './life-events.js';
+export * from './family.js';

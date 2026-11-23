@@ -27,6 +27,7 @@ import {
   uuidSchema,
 } from '@janasahayak/validation';
 import type { z } from 'zod';
+import { createTieredRateLimitConfig } from '../config/rate-limits.js';
 import { AppError, buildSuccessResponse } from '../errors.js';
 import { authenticateAdmin, requireRole } from '../middleware/rbac.js';
 
@@ -97,6 +98,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_EDITOR', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -159,6 +161,7 @@ export async function registerAdminRoutes(
   app.patch(
     '/admin/services/:id',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_EDITOR', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -226,6 +229,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/versions',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_EDITOR', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -317,6 +321,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/sources',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_EDITOR', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -407,6 +412,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/submit-review',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_EDITOR', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -484,6 +490,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/review',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_REVIEWER', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -596,6 +603,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/publish',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_REVIEWER', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],
@@ -673,6 +681,7 @@ export async function registerAdminRoutes(
   app.post(
     '/admin/services/:id/deprecate',
     {
+      config: createTieredRateLimitConfig('ADMIN_MUTATION'),
       preHandler: [authHook, requireRole(['CONTENT_REVIEWER', 'ADMIN'])],
       schema: {
         tags: ['Admin Content'],

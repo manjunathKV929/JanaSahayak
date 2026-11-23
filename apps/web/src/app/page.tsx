@@ -37,6 +37,30 @@ export default async function HomePage() {
           All Services
         </Link>
         <Link
+          href="/deadlines"
+          className="text-sm font-semibold text-civic-navy hover:underline px-3 py-1.5 rounded transition-colors"
+        >
+          Deadlines
+        </Link>
+        <Link
+          href="/locations"
+          className="text-sm font-semibold text-civic-navy hover:underline px-3 py-1.5 rounded transition-colors"
+        >
+          Service Centers
+        </Link>
+        <Link
+          href="/life-events"
+          className="text-sm font-semibold text-civic-navy hover:underline px-3 py-1.5 rounded transition-colors"
+        >
+          Life Events
+        </Link>
+        <Link
+          href="/family"
+          className="text-sm font-semibold text-civic-navy hover:underline px-3 py-1.5 rounded transition-colors"
+        >
+          Family Mode
+        </Link>
+        <Link
           href="/design-system"
           className="text-sm font-semibold text-civic-navy hover:underline px-3 py-1.5 rounded transition-colors"
         >

@@ -188,6 +188,13 @@ export function JourneyStepper({ service, initialJourney, language = 'en' }: Jou
 
   return (
     <div className="space-y-6" id="application-journey-section">
+      {/* Live progress announcement for screen readers */}
+      <div className="sr-only" role="status" aria-live="polite">
+        Application journey progress: {progress.completedSteps} of {progress.totalSteps} steps
+        completed ({progress.percentage}%).
+        {nextStep ? ` Active next step: ${nextStep.title}.` : ' All steps completed.'}
+      </div>
+
       {/* Progress Meter */}
       <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -371,13 +378,17 @@ export function JourneyStepper({ service, initialJourney, language = 'en' }: Jou
 
       {/* Step by Step Timeline */}
       <Card title="All Journey Steps">
-        <div className="space-y-6 pt-2">
+        <ol className="space-y-6 pt-2 list-none p-0">
           {steps.map((step: JourneyStepWithProgress, index: number) => {
             const isCompleted = step.status === 'COMPLETED';
             const isCurrent = step.status === 'IN_PROGRESS';
 
             return (
-              <div key={step.id} className="relative flex items-start gap-4">
+              <li
+                key={step.id}
+                aria-current={isCurrent ? 'step' : undefined}
+                className="relative flex items-start gap-4"
+              >
                 {/* Connector line */}
                 {index < steps.length - 1 && (
                   <div
@@ -480,10 +491,10 @@ export function JourneyStepper({ service, initialJourney, language = 'en' }: Jou
                     </div>
                   )}
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </Card>
     </div>
   );

@@ -6,6 +6,8 @@ import {
   VERIFICATION_STATUSES,
 } from '@janasahayak/types';
 
+import { isSafePublicHttpsUrl } from './security.js';
+
 export const uuidSchema = z.string().uuid();
 
 export const requestIdSchema = z
@@ -38,16 +40,9 @@ export const officialHttpsUrlSchema = z
   .string()
   .trim()
   .url()
-  .refine(
-    (value) => {
-      try {
-        const parsed = new URL(value);
-        return parsed.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    },
-    { message: 'Official source URLs must use HTTPS' },
-  );
+  .refine((value) => isSafePublicHttpsUrl(value), {
+    message:
+      'Official source URLs must use HTTPS and point to safe public hostnames (private, local, and metadata endpoints are prohibited)',
+  });
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

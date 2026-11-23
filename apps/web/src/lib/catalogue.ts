@@ -1,7 +1,12 @@
 import type {
   AIAssistResult,
   CatalogueCategory,
+  DeadlineSummary,
   DocumentGuideDetail,
+  FamilyMemberProfile,
+  FamilyScanResponse,
+  LifeEventRecord,
+  LocationSummary,
   PublicServiceDetail,
   PublicServiceSummary,
   SearchInterpretationResult,
@@ -965,4 +970,541 @@ export async function askAIAssistant(
     language,
     service: serviceDetail,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Phase 13 Advanced Features Fetchers & Offline Fallbacks
+// ---------------------------------------------------------------------------
+
+export const SYNTHETIC_DEADLINES: DeadlineSummary[] = [
+  {
+    id: 'dl000000-0000-0000-0000-000000000001',
+    serviceId: '11111111-1111-1111-1111-111111111111',
+    serviceSlug: 'synthetic-post-matric-scholarship',
+    serviceTitle: '[Synthetic Sample] Post-Matric Scholarship Scheme (Karnataka)',
+    category: 'SCHEME',
+    stateCode: 'KA',
+    name: 'Academic Year 2026-27 Application Deadline',
+    opensAt: '2026-08-01T00:00:00.000Z',
+    closesAt: '2026-12-31T23:59:59.000Z',
+    daysRemaining: 38,
+    status: 'OPEN',
+    sourceUrl: 'https://ssp.postmatric.karnataka.gov.in',
+    sourcePublisher: 'Social Welfare Department',
+    lastVerifiedAt: '2026-11-15T00:00:00.000Z',
+  },
+  {
+    id: 'dl000000-0000-0000-0000-000000000002',
+    serviceId: '22222222-2222-2222-2222-222222222222',
+    serviceSlug: 'synthetic-senior-citizen-card',
+    serviceTitle: '[Synthetic Sample] Senior Citizen Identity Card (Karnataka)',
+    category: 'CERTIFICATE',
+    stateCode: 'KA',
+    name: 'Annual Healthcare Entitlement Verification Cycle',
+    opensAt: '2026-10-01T00:00:00.000Z',
+    closesAt: '2026-12-05T23:59:59.000Z',
+    daysRemaining: 12,
+    status: 'CLOSING_SOON',
+    sourceUrl: 'https://karnataka.gov.in/seniorcitizen',
+    sourcePublisher: 'Directorate for Empowerment of Senior Citizens',
+    lastVerifiedAt: '2026-11-16T00:00:00.000Z',
+  },
+  {
+    id: 'dl000000-0000-0000-0000-000000000003',
+    serviceId: '11111111-1111-1111-1111-111111111111',
+    serviceSlug: 'synthetic-post-matric-scholarship',
+    serviceTitle: '[Synthetic Sample] Post-Matric Scholarship Scheme (Karnataka)',
+    category: 'SCHEME',
+    stateCode: 'KA',
+    name: 'Late Fee Concession Appeal Window',
+    opensAt: '2027-01-05T00:00:00.000Z',
+    closesAt: '2027-01-25T23:59:59.000Z',
+    daysRemaining: null,
+    status: 'UPCOMING',
+    sourceUrl: 'https://ssp.postmatric.karnataka.gov.in',
+    sourcePublisher: 'Social Welfare Department',
+    lastVerifiedAt: '2026-11-15T00:00:00.000Z',
+  },
+];
+
+export const SYNTHETIC_LOCATIONS: LocationSummary[] = [
+  {
+    id: 'loc00000-0000-0000-0000-000000000001',
+    name: 'Bangalore One — Koramangala Civic Centre',
+    centerType: 'B1_K1_CENTRE',
+    address: '80 Feet Road, 4th Block, Koramangala, Bengaluru',
+    district: 'Bengaluru Urban',
+    taluk: 'Bengaluru South',
+    stateCode: 'KA',
+    pincode: '560034',
+    latitude: 12.9344,
+    longitude: 77.6256,
+    contactPhone: '080-22967111',
+    operatingHours: 'Mon–Sat: 08:00 AM – 07:00 PM; Sun: 09:00 AM – 01:00 PM',
+    verifiedSourceUrl: 'https://karnataka.gov.in/bangaloreone',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '11111111-1111-1111-1111-111111111111',
+        serviceSlug: 'synthetic-post-matric-scholarship',
+        serviceTitle: 'Post-Matric Scholarship Scheme (Karnataka)',
+        assistanceType: 'BIOMETRIC_EKYC',
+      },
+      {
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        serviceSlug: 'synthetic-senior-citizen-card',
+        serviceTitle: 'Senior Citizen Identity Card (Karnataka)',
+        assistanceType: 'APPLICATION_FILING',
+      },
+    ],
+  },
+  {
+    id: 'loc00000-0000-0000-0000-000000000002',
+    name: 'Karnataka One — Hubballi Urban Center',
+    centerType: 'B1_K1_CENTRE',
+    address: 'Corporation Complex, Neeligin Road, Hubballi',
+    district: 'Dharwad',
+    taluk: 'Hubballi Urban',
+    stateCode: 'KA',
+    pincode: '580020',
+    latitude: 15.3647,
+    longitude: 75.124,
+    contactPhone: '0836-2256789',
+    operatingHours: 'Mon–Sat: 09:00 AM – 06:00 PM',
+    verifiedSourceUrl: 'https://karnatakaone.gov.in',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '11111111-1111-1111-1111-111111111111',
+        serviceSlug: 'synthetic-post-matric-scholarship',
+        serviceTitle: 'Post-Matric Scholarship Scheme (Karnataka)',
+        assistanceType: 'BIOMETRIC_EKYC',
+      },
+    ],
+  },
+  {
+    id: 'loc00000-0000-0000-0000-000000000003',
+    name: 'Nadakacheri (Atalji Janasnehi Kendra) — Bengaluru South (Kengeri)',
+    centerType: 'NADAKACHERI',
+    address: 'Mysore Road, Near Kengeri Bus Terminal, Kengeri, Bengaluru',
+    district: 'Bengaluru Urban',
+    taluk: 'Bengaluru South',
+    stateCode: 'KA',
+    pincode: '560060',
+    latitude: 12.91,
+    longitude: 77.484,
+    contactPhone: '080-28485555',
+    operatingHours: 'Mon–Sat: 10:00 AM – 05:30 PM (2nd & 4th Sat Holiday)',
+    verifiedSourceUrl: 'https://nadakacheri.karnataka.gov.in',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '11111111-1111-1111-1111-111111111111',
+        serviceSlug: 'synthetic-post-matric-scholarship',
+        serviceTitle: 'Post-Matric Scholarship Scheme (Karnataka)',
+        assistanceType: 'DOCUMENT_SUBMISSION',
+      },
+    ],
+  },
+  {
+    id: 'loc00000-0000-0000-0000-000000000004',
+    name: 'Nadakacheri — Mysuru Rural Center',
+    centerType: 'NADAKACHERI',
+    address: 'Taluk Office Premises, Nazarbad, Mysuru',
+    district: 'Mysuru',
+    taluk: 'Mysuru Rural',
+    stateCode: 'KA',
+    pincode: '570010',
+    latitude: 12.3051,
+    longitude: 76.6552,
+    contactPhone: '0821-2423333',
+    operatingHours: 'Mon–Sat: 10:00 AM – 05:30 PM',
+    verifiedSourceUrl: 'https://nadakacheri.karnataka.gov.in',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        serviceSlug: 'synthetic-senior-citizen-card',
+        serviceTitle: 'Senior Citizen Identity Card (Karnataka)',
+        assistanceType: 'APPLICATION_FILING',
+      },
+    ],
+  },
+  {
+    id: 'loc00000-0000-0000-0000-000000000005',
+    name: 'Taluk Office (Tahasildar Desk) — Bengaluru North (Yelahanka)',
+    centerType: 'TALUK_OFFICE',
+    address: 'Mini Vidhana Soudha, Yelahanka Old Town, Bengaluru',
+    district: 'Bengaluru Urban',
+    taluk: 'Yelahanka',
+    stateCode: 'KA',
+    pincode: '560064',
+    latitude: 13.1007,
+    longitude: 77.5963,
+    contactPhone: '080-28562222',
+    operatingHours: 'Mon–Fri: 10:00 AM – 05:30 PM',
+    verifiedSourceUrl: 'https://bengaluruurban.nic.in',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        serviceSlug: 'synthetic-senior-citizen-card',
+        serviceTitle: 'Senior Citizen Identity Card (Karnataka)',
+        assistanceType: 'IN_PERSON_ASSISTANCE',
+      },
+    ],
+  },
+  {
+    id: 'loc00000-0000-0000-0000-000000000006',
+    name: 'Grama One — Mandya Rural Citizen Desk',
+    centerType: 'SEVA_KENDRA',
+    address: 'Gram Panchayat Office, Keragodu Hobli, Mandya',
+    district: 'Mandya',
+    taluk: 'Mandya',
+    stateCode: 'KA',
+    pincode: '571446',
+    latitude: 12.523,
+    longitude: 76.898,
+    contactPhone: '08232-224400',
+    operatingHours: 'Mon–Sat: 09:30 AM – 06:00 PM',
+    verifiedSourceUrl: 'https://gramaone.karnataka.gov.in',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    supportedServices: [
+      {
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        serviceSlug: 'synthetic-senior-citizen-card',
+        serviceTitle: 'Senior Citizen Identity Card (Karnataka)',
+        assistanceType: 'APPLICATION_FILING',
+      },
+    ],
+  },
+];
+
+export const SYNTHETIC_LIFE_EVENTS: LifeEventRecord[] = [
+  {
+    id: 'le000000-0000-0000-0000-000000000001',
+    key: 'EDUCATION_HIGHER',
+    order: 1,
+    icon: 'AcademicCapIcon',
+    title: {
+      en: 'Higher Education & Student Support',
+      kn: 'ಉನ್ನತ ಶಿಕ್ಷಣ ಮತ್ತು ವಿದ್ಯಾರ್ಥಿ ಬೆಂಬಲ',
+      hi: 'उच्च शिक्षा और छात्र सहायता',
+    },
+    description: {
+      en: 'Comprehensive support bundle for students pursuing post-matric, degree, or professional studies.',
+      kn: 'ಮೆಟ್ರಿಕ್ ನಂತರದ, ಪದವಿ ಅಥವಾ ವೃತ್ತಿಪರ ವ್ಯಾಸಂಗ ಮಾಡುವ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಸಮಗ್ರ ಬೆಂಬಲ ಯೋಜನೆಗಳು.',
+      hi: 'मैट्रिक के बाद, डिग्री या व्यावसायिक पढ़ाई करने वाले छात्रों के लिए व्यापक सहायता योजनाएं।',
+    },
+    serviceBundles: [
+      {
+        serviceId: '11111111-1111-1111-1111-111111111111',
+        slug: 'synthetic-post-matric-scholarship',
+        title: 'Post-Matric Scholarship Scheme (Karnataka)',
+        category: 'SCHEME',
+        importance: 'CRITICAL',
+        typicalTimeline: 'Apply before 31 December each academic year',
+        requiredDocuments: [
+          'Aadhaar Card',
+          'Income & Caste Certificate (RD Number)',
+          'College Admission Receipt & Fee Details',
+          'Marks Card of Qualifying Examination',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'le000000-0000-0000-0000-000000000002',
+    key: 'CHILDBIRTH_MATERNITY',
+    order: 2,
+    icon: 'HeartIcon',
+    title: {
+      en: 'Maternity Support & Child Healthcare',
+      kn: 'ಹೆರಿಗೆ ನೆರವು ಮತ್ತು ಮಕ್ಕಳ ಆರೋಗ್ಯ ರಕ್ಷಣೆ',
+      hi: 'मातृत्व सहायता और बाल स्वास्थ्य देखभाल',
+    },
+    description: {
+      en: 'Essential nutritional, financial, and healthcare assistance for pregnant mothers and newborns.',
+      kn: 'ಗರ್ಭಿಣಿಯರು ಮತ್ತು ನವಜಾತ ಶಿಶುಗಳಿಗೆ ಅಗತ್ಯ ಪೌಷ್ಟಿಕ, ಆರ್ಥಿಕ ಮತ್ತು ಆರೋಗ್ಯ ನೆರವು.',
+      hi: 'गर्भवती माताओं और नवजात शिशुओं के लिए आवश्यक पोषण, वित्तीय और स्वास्थ्य सहायता।',
+    },
+    serviceBundles: [
+      {
+        serviceId: '55555555-5555-5555-5555-555555555555',
+        slug: 'mathru-poorna-yojana',
+        title: 'Mathru Poorna Nutritional Assistance',
+        category: 'HEALTHCARE',
+        importance: 'CRITICAL',
+        typicalTimeline: 'Register at nearest Anganwadi during 1st trimester',
+        requiredDocuments: ['Mother & Child Protection (MCP) Card', 'Aadhaar Card'],
+      },
+    ],
+  },
+  {
+    id: 'le000000-0000-0000-0000-000000000003',
+    key: 'EMPLOYMENT_LIVELIHOOD',
+    order: 3,
+    icon: 'BriefcaseIcon',
+    title: {
+      en: 'Youth Employment & Livelihood Support',
+      kn: 'ಯುವ ಉದ್ಯೋಗ ಮತ್ತು ಜೀವನೋಪಾಯ ಬೆಂಬಲ',
+      hi: 'युवा रोजगार और आजीविका सहायता',
+    },
+    description: {
+      en: 'Financial stipends, subsidized loans, and vocational training for unemployed graduates and artisans.',
+      kn: 'ನಿರುದ್ಯೋಗಿ ಪದವೀಧರರು ಮತ್ತು ಕುಶಲಕರ್ಮಿಗಳಿಗೆ ಆರ್ಥಿಕ ಭತ್ಯೆ, ರಿಯಾಯಿತಿ ಸಾಲಗಳು ಮತ್ತು ತರಬೇತಿ.',
+      hi: 'बेरोजगार स्नातकों और कारीगरों के लिए वित्तीय भत्ता, रियायती ऋण और व्यावसायिक प्रशिक्षण।',
+    },
+    serviceBundles: [
+      {
+        serviceId: '77777777-7777-7777-7777-777777777777',
+        slug: 'yuva-nidhi-scheme',
+        title: 'Yuva Nidhi Unemployment Allowance',
+        category: 'LIVELIHOOD',
+        importance: 'CRITICAL',
+        typicalTimeline: 'Apply 180 days post graduation completion',
+        requiredDocuments: [
+          'Degree / Diploma Certificate',
+          'Karnataka Domicile Proof',
+          'Aadhaar-Seeded Bank Account',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'le000000-0000-0000-0000-000000000004',
+    key: 'SENIOR_RETIREMENT',
+    order: 4,
+    icon: 'ShieldCheckIcon',
+    title: {
+      en: 'Senior Citizen Welfare & Pension Security',
+      kn: 'ಹಿರಿಯ ನಾಗರಿಕರ ಕಲ್ಯಾಣ ಮತ್ತು ಪಿಂಚಣಿ ಭದ್ರತೆ',
+      hi: 'वरिष्ठ नागरिक कल्याण और पेंशन सुरक्षा',
+    },
+    description: {
+      en: 'Identity verification, social security pensions, and health insurance for citizens aged 60+.',
+      kn: '60 ವರ್ಷ ದಾಟಿದ ಹಿರಿಯ ನಾಗರಿಕರಿಗೆ ಗುರುತಿನ ಚೀಟಿ, ಸಾಮಾಜಿಕ ಭದ್ರತಾ ಪಿಂಚಣಿ ಮತ್ತು ಆರೋಗ್ಯ ರಕ್ಷಣೆ.',
+      hi: '60 वर्ष से अधिक आयु के नागरिकों के लिए पहचान पत्र, सामाजिक सुरक्षा पेंशन और स्वास्थ्य सुरक्षा।',
+    },
+    serviceBundles: [
+      {
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        slug: 'synthetic-senior-citizen-card',
+        title: 'Senior Citizen Identity Card (Karnataka)',
+        category: 'CERTIFICATE',
+        importance: 'RECOMMENDED',
+        typicalTimeline: 'Anytime upon reaching age 60',
+        requiredDocuments: [
+          'Age Proof (Voter ID / School Certificate)',
+          'Residence Proof',
+          'Photos',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'le000000-0000-0000-0000-000000000005',
+    key: 'BEREAVEMENT_SURVIVOR',
+    order: 5,
+    icon: 'DocumentTextIcon',
+    title: {
+      en: 'Survivor Benefits & Family Continuity',
+      kn: 'ಕುಟುಂಬ ರಕ್ಷಣೆ ಮತ್ತು ಬದುಕುಳಿದವರ ಸೌಲಭ್ಯಗಳು',
+      hi: 'उत्तरजीवी लाभ और पारिवारिक निरंतरता',
+    },
+    description: {
+      en: 'Step-by-step guidance for legal heir certificates, survivor benefits, and emergency relief after a family loss.',
+      kn: 'ಕುಟುಂಬದಲ್ಲಿ ಸಾವಿನ ನಂತರ ಕಾನೂನುಬದ್ಧ ವಾರಸುದಾರರ ಪ್ರಮಾಣಪತ್ರ ಮತ್ತು ಬದುಕುಳಿದವರ ಪರಿಹಾರ ಮಾರ್ಗದರ್ಶಿ.',
+      hi: 'परिवार में क्षति के बाद कानूनी उत्तराधिकारी प्रमाण पत्र, उत्तरजीवी लाभ और आपातकालीन राहत।',
+    },
+    serviceBundles: [
+      {
+        serviceId: '99999999-9999-9999-9999-999999999999',
+        slug: 'surviving-family-member-certificate',
+        title: 'Surviving Family Member Certificate (Family Tree)',
+        category: 'CERTIFICATE',
+        importance: 'CRITICAL',
+        typicalTimeline: 'Within 30–60 days of death event',
+        requiredDocuments: ['Death Certificate', 'Ration Card', 'Self-Declaration Affidavit'],
+      },
+    ],
+  },
+];
+
+export async function fetchDeadlines(params?: {
+  status?: string | undefined;
+  category?: string | undefined;
+  state?: string | undefined;
+}): Promise<DeadlineSummary[]> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  try {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.category) q.set('category', params.category);
+    if (params?.state) q.set('state', params.state);
+
+    const res = await fetch(`${apiBase}/deadlines?${q.toString()}`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // Return synthetic fallback on failure
+  }
+
+  let list = [...SYNTHETIC_DEADLINES];
+  if (params?.status && params.status !== 'ALL') {
+    list = list.filter((d) => d.status === params.status);
+  }
+  if (params?.category) {
+    list = list.filter((d) => d.category.toLowerCase() === params.category!.toLowerCase());
+  }
+  return list;
+}
+
+export async function fetchLocations(params?: {
+  district?: string | undefined;
+  centerType?: string | undefined;
+  pincode?: string | undefined;
+  serviceId?: string | undefined;
+}): Promise<LocationSummary[]> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  try {
+    const q = new URLSearchParams();
+    if (params?.district) q.set('district', params.district);
+    if (params?.centerType) q.set('centerType', params.centerType);
+    if (params?.pincode) q.set('pincode', params.pincode);
+    if (params?.serviceId) q.set('serviceId', params.serviceId);
+
+    const res = await fetch(`${apiBase}/locations?${q.toString()}`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // Return synthetic fallback on failure
+  }
+
+  let list = [...SYNTHETIC_LOCATIONS];
+  if (params?.district) {
+    list = list.filter((l) => l.district.toLowerCase().includes(params.district!.toLowerCase()));
+  }
+  if (params?.centerType) {
+    list = list.filter((l) => l.centerType === params.centerType);
+  }
+  if (params?.pincode) {
+    list = list.filter((l) => l.pincode === params.pincode);
+  }
+  return list;
+}
+
+export async function fetchLifeEvents(): Promise<LifeEventRecord[]> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  try {
+    const res = await fetch(`${apiBase}/life-events`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // Return synthetic fallback
+  }
+  return SYNTHETIC_LIFE_EVENTS;
+}
+
+export async function fetchLifeEventByKey(key: string): Promise<LifeEventRecord | null> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  try {
+    const res = await fetch(`${apiBase}/life-events/${key}`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // Return synthetic fallback
+  }
+  return SYNTHETIC_LIFE_EVENTS.find((e) => e.key === key) ?? null;
+}
+
+export async function executeFamilyScan(
+  members: FamilyMemberProfile[],
+): Promise<FamilyScanResponse> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
+  try {
+    const res = await fetch(`${apiBase}/family/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ members }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data) return json.data;
+    }
+  } catch {
+    // Fall back to local calculation
+  }
+
+  // Local client-side fallback calculation
+  const results = members.map((m, idx) => {
+    const eligibleServices = [];
+    if (m.age >= 15 && m.age <= 30) {
+      eligibleServices.push({
+        serviceId: '11111111-1111-1111-1111-111111111111',
+        slug: 'synthetic-post-matric-scholarship',
+        title: 'Post-Matric Scholarship Scheme (Karnataka)',
+        category: 'SCHEME',
+        departmentName: 'Social Welfare Department',
+        reason: 'Qualifies based on student age range and education level.',
+        confidence: 'POTENTIALLY_ELIGIBLE' as const,
+      });
+    }
+    if (m.age >= 60) {
+      eligibleServices.push({
+        serviceId: '22222222-2222-2222-2222-222222222222',
+        slug: 'synthetic-senior-citizen-card',
+        title: 'Senior Citizen Identity Card (Karnataka)',
+        category: 'CERTIFICATE',
+        departmentName: 'Directorate for Empowerment of Senior Citizens',
+        reason: 'Senior citizen milestone reached (60+ years).',
+        confidence: 'POTENTIALLY_ELIGIBLE' as const,
+      });
+    }
+    if (m.gender === 'FEMALE' && m.age >= 18) {
+      eligibleServices.push({
+        serviceId: '33333333-3333-3333-3333-333333333333',
+        slug: 'gruha-lakshmi-scheme',
+        title: 'Gruha Lakshmi Financial Assistance',
+        category: 'FINANCIAL_ASSISTANCE',
+        departmentName: 'Department of Women & Child Development',
+        reason: 'Adult woman head of household empowerment scheme.',
+        confidence: 'CHECK_REQUIRED' as const,
+      });
+    }
+    return {
+      memberId: m.id ?? `mem-${idx + 1}`,
+      memberName: m.name,
+      relationship: m.relationship,
+      eligibleServices,
+    };
+  });
+
+  return {
+    results,
+    scannedCount: members.length,
+    totalEligibleFound: results.reduce((acc, r) => acc + r.eligibleServices.length, 0),
+    privacyDisclaimer:
+      'Zero-knowledge scan: No identity cards, phone numbers, or personal profile data are ever saved or transmitted to third parties.',
+  };
 }

@@ -4,6 +4,7 @@ import { getEligibilityForService } from '@janasahayak/db';
 import type { ApiErrorDetail } from '@janasahayak/types';
 import { evaluateEligibility, evaluateEligibilityRequestSchema } from '@janasahayak/validation';
 import type { z } from 'zod';
+import { createTieredRateLimitConfig } from '../config/rate-limits.js';
 import { AppError, buildSuccessResponse } from '../errors.js';
 
 export interface EligibilityRouteOptions {
@@ -153,6 +154,7 @@ export async function registerEligibilityRoutes(
   app.post(
     '/services/:id/eligibility/evaluate',
     {
+      config: createTieredRateLimitConfig('SENSITIVE_ACTION'),
       schema: {
         description:
           'Deterministically evaluate citizen answers against official service eligibility rules',

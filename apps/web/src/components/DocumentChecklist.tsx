@@ -68,6 +68,9 @@ export function DocumentChecklist({
               aria-label="Document preparation progress"
             />
           </div>
+          <div className="sr-only" role="status" aria-live="polite">
+            {readyCount} of {total} documents ready ({percentage}% complete).
+          </div>
         </div>
       </div>
 
@@ -117,12 +120,13 @@ export function DocumentChecklist({
                 </div>
 
                 {/* Status Toggle Buttons */}
-                <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0 pt-2 sm:pt-0">
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0">
                   <button
                     type="button"
                     onClick={() => handleToggle(doc.id, 'HAVE')}
                     aria-pressed={!isMissing}
-                    className={`text-xs font-heading font-semibold px-3 py-1.5 rounded transition-colors min-h-[36px] ${
+                    aria-label={`Mark ${doc.name} as I have this document`}
+                    className={`text-xs font-heading font-semibold px-3.5 py-2 rounded-md transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-civic-navy ${
                       !isMissing
                         ? 'bg-civic-green text-white shadow-sm'
                         : 'bg-civic-surface text-civic-charcoal hover:bg-civic-border/40'
@@ -134,7 +138,8 @@ export function DocumentChecklist({
                     type="button"
                     onClick={() => handleToggle(doc.id, 'MISSING')}
                     aria-pressed={isMissing}
-                    className={`text-xs font-heading font-semibold px-3 py-1.5 rounded transition-colors min-h-[36px] ${
+                    aria-label={`Mark ${doc.name} as missing document`}
+                    className={`text-xs font-heading font-semibold px-3.5 py-2 rounded-md transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-civic-navy ${
                       isMissing
                         ? 'bg-civic-amber text-white shadow-sm'
                         : 'bg-civic-surface text-civic-charcoal hover:bg-civic-border/40'
