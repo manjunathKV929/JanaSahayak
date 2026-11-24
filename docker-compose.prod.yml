@@ -1,0 +1,129 @@
+# ==============================================================================
+# JanaSahayak - Production Multi-Container Orchestration
+# Environment: Production | Managed Network | Strict Health & Resource Budgets
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Relational Engine + pgvector Extension
+  # Note: In cloud production, managed PostgreSQL (AWS RDS / Cloud SQL) is preferred.
+  # This container provides the self-hosted production-ready deployment profile.
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: janasahayak-prod-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Required}
+      POSTGRES_USER: ${POSTGRES_USER:?Required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Required}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - prod_pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4096M
+        reservations:
+          cpus: '0.5'
+          memory: 1024M
+    networks:
+      - prod-network
+
+  # ----------------------------------------------------------------------------
+  # Fastify 5 REST API Service
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: janasahayak-prod-api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:?Required}
+      DATABASE_SSL: ${DATABASE_SSL:-true}
+      DATABASE_MAX_CONNECTIONS: ${DATABASE_MAX_CONNECTIONS:-20}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:?Required}
+      API_RATE_LIMIT_MAX: ${API_RATE_LIMIT_MAX:-100}
+      API_RATE_LIMIT_WINDOW_MS: ${API_RATE_LIMIT_WINDOW_MS:-60000}
+      LOG_LEVEL: info
+      SESSION_SECRET: ${SESSION_SECRET:?Required}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      BHASHINI_API_KEY: ${BHASHINI_API_KEY:-}
+      BHASHINI_USER_ID: ${BHASHINI_USER_ID:-}
+    ports:
+      - '127.0.0.1:3001:3001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/v1/health']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    networks:
+      - prod-network
+
+  # ----------------------------------------------------------------------------
+  # Next.js 15 Web Application
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: janasahayak-prod-web
+    restart: always
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Required}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Required}
+      NEXT_PUBLIC_DEFAULT_LOCALE: en
+    ports:
+      - '127.0.0.1:3000:3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    networks:
+      - prod-network
+
+volumes:
+  prod_pgdata:
+    name: janasahayak_prod_pgdata
+
+networks:
+  prod-network:
+    name: janasahayak-prod-net
+    driver: bridge

@@ -21,6 +21,8 @@ import { registerDeadlinesRoutes } from './routes/deadlines.js';
 import { registerLocationsRoutes } from './routes/locations.js';
 import { registerLifeEventsRoutes } from './routes/life-events.js';
 import { registerFamilyRoutes } from './routes/family.js';
+import { registerMetricsRoutes } from './routes/metrics.js';
+import { defaultMetricsRegistry, MetricsRegistry } from './metrics.js';
 
 export const API_SERVICE_NAME = 'janasahayak-api';
 export const API_VERSION = '0.1.0';
@@ -31,11 +33,13 @@ export interface BuildAppOptions {
   checkDatabase?: () => Promise<'up' | 'down' | 'not_configured'>;
   db?: Queryable;
   ragService?: import('@janasahayak/ai').RAGService;
+  metricsRegistry?: MetricsRegistry;
   logger?: boolean;
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
   const { env } = options;
+  const metrics = options.metricsRegistry ?? defaultMetricsRegistry;
 
   const app = Fastify({
     trustProxy: env.API_TRUST_PROXY,
@@ -165,6 +169,28 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     },
   });
 
+  app.addHook('onRequest', async (request) => {
+    (request as unknown as { startTime: bigint }).startTime = process.hrtime.bigint();
+  });
+
+  app.addHook('onResponse', async (request, reply) => {
+    const startTime = (request as unknown as { startTime?: bigint }).startTime;
+    if (startTime !== undefined) {
+      const elapsedNs = Number(process.hrtime.bigint() - startTime);
+      const elapsedSec = elapsedNs / 1e9;
+      const route = request.routeOptions.url ?? request.url.split('?')[0] ?? 'unmatched';
+      metrics.recordHttpRequest(request.method, route, reply.statusCode, elapsedSec);
+    }
+    if (dbPool) {
+      metrics.setDbPoolStats({
+        total: dbPool.totalCount,
+        idle: dbPool.idleCount,
+        active: dbPool.totalCount - dbPool.idleCount,
+        waiting: dbPool.waitingCount,
+      });
+    }
+  });
+
   app.addHook('onSend', async (request, reply, payload) => {
     reply.header('X-Request-ID', request.id);
     reply.header(
@@ -183,6 +209,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       url.includes('/translate') ||
       url.includes('/health') ||
       url.includes('/ready') ||
+      url.includes('/metrics') ||
       request.method !== 'GET'
     ) {
       reply.header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -322,6 +349,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       await registerLifeEventsRoutes(v1);
 
       await registerFamilyRoutes(v1);
+
+      await registerMetricsRoutes(v1, { registry: metrics });
 
       v1.get(
         '/openapi.json',

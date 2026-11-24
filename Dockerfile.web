@@ -1,0 +1,59 @@
+# ==============================================================================
+# JanaSahayak Web Frontend - Multi-stage Production Containerfile
+# Framework: Next.js 15 (App Router) | Security: Non-root 'nextjs' user
+# ==============================================================================
+
+# Stage 1: Dependencies & Build
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json tsconfig.json ./
+COPY packages/ ./packages/
+COPY apps/ ./apps/
+
+# Install dependencies across monorepo
+RUN npm ci
+
+# Build packages required by Next.js app
+RUN npm run build --workspace=@janasahayak/types && \
+    npm run build --workspace=@janasahayak/i18n && \
+    npm run build --workspace=@janasahayak/ui && \
+    npm run build --workspace=@janasahayak/validation && \
+    npm run build --workspace=@janasahayak/ai && \
+    npm run build --workspace=@janasahayak/config && \
+    npm run build --workspace=@janasahayak/web
+
+# Stage 2: Production Runner
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+RUN apk add --no-cache curl
+
+# Security: Dedicated unprivileged user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs nextjs
+
+# Copy built application assets and dependencies
+COPY package.json package-lock.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+
+USER nextjs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
+
+CMD ["npm", "run", "start", "--workspace=@janasahayak/web"]

@@ -71,6 +71,7 @@ async function validateOpenApi(): Promise<void> {
       '/life-events',
       '/life-events/{key}',
       '/family/scan',
+      '/metrics',
     ];
 
     for (const requiredPath of requiredPaths) {

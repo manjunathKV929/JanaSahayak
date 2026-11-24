@@ -1,0 +1,103 @@
+# ==============================================================================
+# JanaSahayak - Staging Multi-Container Orchestration
+# Environment: Staging | Verified Synthetic Data | Internal Docker Network
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Relational Engine + pgvector Extension
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: janasahayak-staging-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-janasahayak_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-janasahayak_staging_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_secure_password_replace_in_vault}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - staging_pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-janasahayak_staging_user} -d ${POSTGRES_DB:-janasahayak_staging}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - staging-network
+
+  # ----------------------------------------------------------------------------
+  # Fastify 5 REST API Service
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: janasahayak-staging-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: staging
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-janasahayak_staging_user}:${POSTGRES_PASSWORD:-staging_secure_password_replace_in_vault}@postgres:5432/${POSTGRES_DB:-janasahayak_staging}
+      DATABASE_SSL: 'false'
+      API_CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      API_RATE_LIMIT_MAX: 1000
+      API_RATE_LIMIT_WINDOW_MS: 60000
+      LOG_LEVEL: info
+      SESSION_SECRET: staging_session_secret_min_32_characters_random_string_here
+    ports:
+      - '127.0.0.1:3001:3001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/v1/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - staging-network
+
+  # ----------------------------------------------------------------------------
+  # Next.js 15 Web Application
+  # ----------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: janasahayak-staging-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://api:3001/api/v1
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_DEFAULT_LOCALE: en
+    ports:
+      - '127.0.0.1:3000:3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - staging-network
+
+volumes:
+  staging_pgdata:
+    name: janasahayak_staging_pgdata
+
+networks:
+  staging-network:
+    name: janasahayak-staging-net
+    driver: bridge

@@ -1,0 +1,63 @@
+# ==============================================================================
+# JanaSahayak API - Multi-stage Production Containerfile
+# Base: Node.js 24 Alpine | Security: Non-root 'node' user | Target: Production
+# ==============================================================================
+
+# Stage 1: Build & Compile
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+# Copy root manifest and lockfile
+COPY package.json package-lock.json tsconfig.json ./
+
+# Copy all workspace definitions
+COPY packages/ ./packages/
+COPY services/ ./services/
+
+# Install dependencies across all workspaces
+RUN npm ci
+
+# Build all TypeScript packages and API service
+RUN npm run build --workspace=@janasahayak/types && \
+    npm run build --workspace=@janasahayak/config && \
+    npm run build --workspace=@janasahayak/validation && \
+    npm run build --workspace=@janasahayak/ai && \
+    npm run build --workspace=@janasahayak/db && \
+    npm run build --workspace=@janasahayak/api
+
+# Stage 2: Production Runner
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOST=0.0.0.0
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Security: Non-root execution
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs janasahayak
+
+# Copy manifests
+COPY package.json package-lock.json tsconfig.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/services ./services
+
+# Clean dev dependencies for production footprint
+RUN npm prune --production
+
+USER janasahayak
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3001/api/v1/health || exit 1
+
+CMD ["node", "services/api/dist/server.js"]

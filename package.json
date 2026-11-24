@@ -25,6 +25,9 @@
     "test:watch": "node scripts/run-tests.mjs --watch",
     "test:coverage": "node scripts/run-tests.mjs --coverage",
     "db:migrate": "npm run migrate --workspace=@janasahayak/db",
+    "db:backup": "tsx scripts/backup-db.mjs",
+    "db:restore": "tsx scripts/restore-db.mjs",
+    "test:load": "tsx scripts/load-test.mjs",
     "openapi:validate": "npm run openapi:validate --workspace=@janasahayak/api",
     "clean": "node -e \"const fs=require('fs'); for (const p of ['packages/types/dist','packages/i18n/dist','packages/ui/dist','packages/validation/dist','packages/ai/dist','packages/config/dist','packages/db/dist','services/api/dist','apps/web/.next','coverage']) fs.rmSync(p,{recursive:true,force:true});\"",
     "security:audit": "npm audit --audit-level=high"

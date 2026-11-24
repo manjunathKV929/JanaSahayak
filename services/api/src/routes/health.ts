@@ -126,7 +126,12 @@ export async function registerHealthRoutes(
     },
     async (request, reply) => {
       reply.header('Cache-Control', 'no-store');
-      const databaseStatus = await options.checkDatabase();
+      let databaseStatus: 'up' | 'down' | 'not_configured';
+      try {
+        databaseStatus = await options.checkDatabase();
+      } catch {
+        databaseStatus = 'down';
+      }
 
       if (databaseStatus === 'down') {
         return reply
